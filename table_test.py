@@ -92,6 +92,12 @@ class TableWidget(QTableView):
 			self.enable_forzen_view(selected_range.top(), selected_range.left())
 			self.connect_frozen_view()		
 
+	def pph(self):
+		return (self.horizontalHeader().isVisible())
+
+	def ppv(self):
+		return (self.verticalHeader().isVisible())
+
 	def selection_check(self):
 		print(self.viewport().height())
 		print(self.rowAt(0))

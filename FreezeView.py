@@ -23,19 +23,15 @@ class FreezeView(QTableView):
 		self.orentation           = orentation
 		self.freeze_hiddin_row    = []
 		self.freeze_hiddin_column = []
-		self.parent_scroll_mode   = {"vertical":parent.verticalScrollMode(), "horizontal":parent.horizontalScrollMode()}
+		self.parent_scroll_mode   = {"vertical":None, "horizontal":None}
 	
 		if orentation == FreezeView.left:
-			self.horizontalHeader().show()
-			self.verticalHeader().hide()
+			if parent.horizontalHeader().isVisible():
+				self.horizontalHeader().show()
 
 		if orentation == FreezeView.top:
-			self.verticalHeader().show()				
-			self.horizontalHeader().hide()
-
-		if orentation == FreezeView.corner:
-			self.horizontalHeader().hide()
-			self.verticalHeader().hide()
+			if parent.verticalHeader().isVisible():
+				self.verticalHeader().show()				
 
 		self.setStyleSheet('''border: none;''')
 		self.setFocusPolicy(Qt.NoFocus)
@@ -45,7 +41,6 @@ class FreezeView(QTableView):
 		self.show()
 
 	def connect_to_views(self):
-		
 		self.resizable = True
 		parent         = self.parent
 		self.horizontalHeader().sectionResized.connect(lambda column, old_size, new_size : self.increament_width(  new_size - old_size))
@@ -75,8 +70,8 @@ class FreezeView(QTableView):
 		parent.column_inserted.connect(self.insert_column_at)
 		parent.row_inserted.connect(self.insert_row_at)
 		self.setSelectionModel(parent.selectionModel())
-		self.initiallize_geometry()	#must initiallize geometry after connection, otherwise x, y value will not be correct, it will be a header height, width short, this is due to widget overlapping issue.
-	
+		
+
 	def disconnect_to_views(self):
 		self.resizable = False
 		parent         = self.parent
@@ -125,8 +120,8 @@ class FreezeView(QTableView):
 		y_header_offset      = parent.horizontalHeader().height() *  (self.horizontalHeader().isHidden() - parent.horizontalHeader().isHidden())
 		x                    = parent.frameWidth() + x_header_offset
 		y                    = parent.frameWidth() + y_header_offset
-		w                    = parent.verticalHeader().width()    *  self.verticalHeader().isVisible()
-		h                    = parent.horizontalHeader().height() *  self.horizontalHeader().isVisible()
+		w                    = parent.verticalHeader().width()    *  parent.verticalHeader().isVisible()
+		h                    = parent.horizontalHeader().height() *  parent.horizontalHeader().isVisible()
 		self.setModel(parent.model())
 		self.set_scroll_mode_constrain()
 		if self.orentation == FreezeView.top:
@@ -134,7 +129,7 @@ class FreezeView(QTableView):
 			h =  h + sum([parent.rowHeight(row_index)      for row_index    in range(   self.start_row_index,      self.end_row_index)])                             
 		if self.orentation == FreezeView.left:
 			w =  w + sum([parent.columnWidth(column_index) for column_index in range(self.start_column_index,   self.end_column_index)]) 
-			h =  h + parent.viewport().height() 
+			h =  h + parent.viewport().height()
 		if self.orentation == FreezeView.corner:
 			w =  w + sum([parent.columnWidth(column_index) for column_index in range(self.start_column_index,   self.end_column_index)]) 
 			h =  h + sum([parent.rowHeight(row_index)      for row_index    in range(   self.start_row_index,      self.end_row_index)])
