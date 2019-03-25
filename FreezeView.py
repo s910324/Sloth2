@@ -45,6 +45,7 @@ class FreezeView(QTableView):
 		self.show()
 
 	def connect_to_views(self):
+		
 		self.resizable = True
 		parent         = self.parent
 		self.horizontalHeader().sectionResized.connect(lambda column, old_size, new_size : self.increament_width(  new_size - old_size))
