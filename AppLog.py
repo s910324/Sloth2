@@ -1,0 +1,1 @@
+type(self).__name__

@@ -1,0 +1,354 @@
+#!/usr/bin/env python
+import os
+import sys
+import types
+import warnings
+import pickle
+from PyQt5.QtWidgets import *
+from PyQt5.QtCore    import *
+from PyQt5.QtGui     import *
+from HeaderItem      import HHeaderItem, VHeaderItem
+from DataModel       import DataModel
+from FreezeView      import FreezeView
+from functools       import reduce
+from itertools       import chain
+class TableWidget(QTableView):
+	trigger = pyqtSignal()
+	column_removed            = pyqtSignal(int)
+	row_removed               = pyqtSignal(int)
+	column_inserted           = pyqtSignal(int)
+	row_inserted              = pyqtSignal(int)
+	data_updated              = pyqtSignal(DataModel)
+	def __init__(self, data = [], parent=None,  *args):
+		QTableView.__init__(self, parent, *args)
+		self.enable_frozen_view  = False
+		self.data_model          = DataModel(self)
+		self.left_frozen_view    = None
+		self.corner_frozen_view  = None
+		self.top_frozen_view     = None
+		self.update_data_model()
+		self.setHorizontalScrollMode(QAbstractItemView.ScrollPerPixel)
+		self.setVerticalScrollMode(  QAbstractItemView.ScrollPerPixel)
+
+	def showEvent(self, event):
+		QTableView.showEvent(self, event)
+	
+		
+	def enable_forzen_view(self, row_index, column_index):
+		if self.enable_frozen_view == True : return
+		start_row_index           = self.rowAt(0)
+		start_column_index        = self.columnAt(0)
+  
+
+		self.top_frozen_view      = FreezeView(FreezeView.top,    start_column_index, self.column_counts(), start_row_index,         row_index, self) if row_index                        > 0 else None
+		self.left_frozen_view     = FreezeView(FreezeView.left,   start_column_index,         column_index, start_row_index, self.row_counts(), self) if column_index                     > 0 else None
+		self.corner_frozen_view   = FreezeView(FreezeView.corner, start_column_index,         column_index, start_row_index,         row_index, self) if (column_index > 0 and row_index) > 0 else None
+		
+		if any([self.top_frozen_view, self.left_frozen_view, self.corner_frozen_view]):
+			self.enable_frozen_view   = True
+			if all([self.top_frozen_view, self.left_frozen_view, self.corner_frozen_view]):
+				self.viewport().stackUnder(self.top_frozen_view)
+				self.left_frozen_view.viewport().stackUnder(self.top_frozen_view)
+				self.corner_frozen_view.viewport().stackUnder(self.left_frozen_view)
+
+			elif not any([self.left_frozen_view, self.corner_frozen_view]):
+				self.viewport().stackUnder(self.top_frozen_view)
+
+			elif not any([self.top_frozen_view, self.corner_frozen_view]):
+				self.viewport().stackUnder(self.left_frozen_view)
+
+
+	def disable_frozen_view(self):
+		if self.top_frozen_view    : self.top_frozen_view.disconnect_to_views()
+		if self.left_frozen_view   : self.left_frozen_view.disconnect_to_views()
+		if self.corner_frozen_view : self.corner_frozen_view.disconnect_to_views()
+		self.top_frozen_view    = None, 
+		self.left_frozen_view   = None
+		self.corner_frozen_view = None
+		self.enable_frozen_view = False
+
+
+	def connect_frozen_view(self):
+		if self.enable_frozen_view:
+			if self.top_frozen_view    : self.top_frozen_view.connect_to_views()
+			if self.left_frozen_view   : self.left_frozen_view.connect_to_views()
+			if self.corner_frozen_view : self.corner_frozen_view.connect_to_views()
+
+	def row_counts(self):
+		return self.data_model.rowCount(self)
+
+	def column_counts(self):
+		return self.data_model.columnCount(self)
+
+	def set_data(self, data):
+		if data:
+			self.data_model.data_cached = data
+			self.update_data_model()
+	
+	def froze_view_at_selection(self):
+		selection = self.selectionModel().selection()
+		if len(selection)==1:
+			selected_range = selection[0]
+			self.enable_forzen_view(selected_range.top(), selected_range.left())
+			self.connect_frozen_view()		
+
+	def selection_check(self):
+		print(self.viewport().height())
+		print(self.rowAt(0))
+
+		# self.setItemDelegateForRow() QAbstractItemDelegate
+
+
+		# for i in range(4,8):
+		#   for j in range(3, 6):
+		#       m = self.model().index(i, j)
+		#       self.selectionModel().select(m, QItemSelectionModel.Select)
+		
+		
+		# print (self.selectionModel().selection())
+
+	def copy_selected_ranges(self):
+		selected_data = self.data_in_selected_ranges(self.selectionModel().selection())
+		clip_board_text = ('\n'.join(['\t'.join(map(str, row_data)) for row_data in selected_data]))
+		QApplication.clipboard().setText(clip_board_text)
+		return clip_board_text
+
+	def data_in_selected_ranges(self, selection):
+		assert isinstance(selection, QItemSelection)
+		selected_data   = []
+		if selection:
+			same_top        = len(set([selected_range.top()    for selected_range in selection])) == 1
+			same_bottom     = len(set([selected_range.bottom() for selected_range in selection])) == 1
+			same_left       = len(set([selected_range.left()   for selected_range in selection])) == 1
+			same_right      = len(set([selected_range.right()  for selected_range in selection])) == 1
+			selection_check = [same_top, same_bottom, same_left, same_right]
+			
+			if   selection_check == [1,1,1,1]: #only one range selected
+				selected_data = self.data_in_selected_range(selection[0])
+
+			elif selection_check == [1,1,0,0]: #multiple range with same height, get and sort data from each and combined by row 
+				data_sets     = [ self.data_in_selected_range(selected_range) for selected_range in sorted(selection, key = lambda x : x.left())]
+				selected_data = [list(chain.from_iterable(x)) for x in zip(*data_sets)]
+
+			elif selection_check == [0,0,1,1]: #multiple range with same width, get and sort data from each and concate them 
+				data_sets     = [ self.data_in_selected_range(selected_range) for selected_range in sorted(selection, key = lambda x : x.top())]
+				selected_data = reduce(lambda i, j : i + j, data_sets)
+			else:
+				print("bad selection") #todo error handling
+		return selected_data
+
+
+	def data_in_selected_range(self, selected_range):
+		assert isinstance(selected_range, QItemSelectionRange)
+		return self.data_in_rect(selected_range.top(), selected_range.bottom(), selected_range.left(), selected_range.right())
+
+	def data_in_rect(self, top, bottom, left, right):
+		assert all([ isinstance(dimension, int) for dimension in [top, bottom, left, right]])
+		selected_data = []
+		for row_index in range(top, bottom+1):
+			row_segment_data = self.data_model.data_cached[row_index][left:right+1]
+			selected_data.append(row_segment_data)
+		return selected_data
+
+	def data_in_cell(self, row_index, column_index):
+		assert all([ isinstance(dimension, int) for dimension in [row_index, column_index]])
+		return self.data_model[row_index][column_index]
+
+	def clear_selected_ranges(self):
+		for selected_range in self.selectionModel().selection():
+			self.clear_selected_range(selected_range)
+
+	def clear_selected_range(self, selected_range):
+		assert isinstance(selected_range, QItemSelectionRange)
+		for row_index in range(selected_range.top(), selected_range.bottom()+1):
+			for column_index in range(selected_range.left(), selected_range.right()+1):
+				self.data_model.data_cached[row_index][column_index] = ""
+		self.update_data_model()
+
+	def clear_selected_rows(self):
+		for selected_row_index in self.selected_rows():
+			self.clear_row_at(selected_row_index)
+
+	def clear_selected_columns(self):
+		for selected_column_index in self.selected_columns():
+			self.clear_column_at(selected_column_index)
+
+	def clear_row_at(self, row_index):
+		row_data = self.data_model.data_cached[row_index]
+		self.data_model.data_cached[row_index] = [ "" for data in range(len(row_data))]
+		self.update_data_model()
+
+	def clear_column_at(self, column_index):
+		_ =[ each_row_data.__setitem__(column_index, "") for each_row_data in self.data_model.data_cached]
+		self.update_data_model()        
+
+
+	def selected(self):
+		for selected_range in self.selectionModel().selection():
+			print (selected_range)
+
+	def selected_rows(self):
+		return [ model_index.row()    for model_index in self.selectionModel().selectedRows()]
+
+	def selected_columns(self):
+		return [ model_index.column() for model_index in self.selectionModel().selectedColumns()]
+
+	def insert_column_before_selection(self):
+		if len(self.selected_columns())==1:
+			self.insert_column_at(self.selected_columns()[0])
+			self.selectColumn(self.selected_columns()[0]+1)
+
+	def insert_column_after_selection(self):
+		if len(self.selected_columns())==1:
+			self.insert_column_at(self.selected_columns()[0]+1)
+
+	def insert_row_before_selection(self):
+		if len(self.selected_rows())==1:
+			self.insert_row_at(self.selected_rows()[0])
+			self.selectRow(self.selected_rows()[0]+1)
+
+	def insert_row_after_selection(self):
+		if len(self.selected_rows())==1:
+			self.insert_row_at(self.selected_rows()[0]+1)       
+		
+	def insert_row_at(self, row_index, row_counts = 1):
+		for new_rows in range(row_counts):
+			if self.data_model.data_cached:
+				self.data_model.data_cached.insert(row_index, ["" for each_column in range(len(self.data_model.data_cached[0]))])
+			else:
+				self.data_model.data_cached.append([""])
+			self.row_inserted.emit(row_index)
+			self.update_data_model()
+
+	def insert_column_at(self, column_index, column_counts = 1):
+		for new_columns in range(column_counts):
+			if self.data_model.data_cached:
+				_ =[ each_row.insert(column_index, "") for each_row in self.data_model.data_cached]
+				
+			else:
+				self.data_model.data_cached.append([""])
+			self.column_inserted.emit(column_index)
+			self.update_data_model()
+
+	def remove_selected_rows(self):
+  
+		for selected_row_index in sorted(self.selected_rows(), reverse=True):
+			self.remove_row_at(selected_row_index)
+
+
+	def remove_selected_columns(self):
+		for selected_column_index in sorted(self.selected_columns(), reverse=True):
+			self.remove_column_at(selected_column_index)
+
+	def remove_row_at(self, row_index):
+		self.data_model.data_cached.pop(row_index)
+		self.selectionModel().clearSelection()
+		self.row_removed.emit(row_index)
+		self.update_data_model()
+
+	def remove_column_at(self, column_index):
+		_ = [ each_row.pop(column_index) for each_row in self.data_model.data_cached]
+		self.selectionModel().clearSelection()     
+		self.column_removed.emit(column_index) 
+		self.update_data_model()        
+		
+	def update_data_model(self):
+		self.setModel(self.data_model)
+		self.model().layoutChanged.emit()
+		self.data_updated.emit(self.model())
+		
+
+
+
+	def keyPressEvent(self, event):
+		if event.matches(QKeySequence.Copy):
+			self.copy_selected_ranges()
+		elif event.matches(QKeySequence.Paste):
+			self.paste()
+		elif event.matches(QKeySequence.Delete):
+			self.clear_selected_ranges()
+		else:
+			QTableView.keyPressEvent(self, event)
+
+
+		
+	def resizeEvent(self, event):
+		self.update_data_model()	
+
+
+
+class DebugWindow(QMainWindow):
+	def __init__(self, parent=None):
+		super(DebugWindow, self).__init__(parent)
+		self.table       = TableWidget(self)
+		self.toolbar     = QToolBar('main function')
+
+		self.a  = QAction('insert_row_before_selection', self)
+		self.b  = QAction('insert_row_after_selection', self)
+		self.c  = QAction('insert_column_before_selection', self)
+		self.d  = QAction('insert_column_after_selection', self)
+		self.e  = QAction("remove_selected_rows", self)
+		self.f  = QAction("remove_selected_columns", self)
+		self.g  = QAction("clear_selected_rows", self)
+		self.h  = QAction("clear_selected_columns", self)       
+		self.i  = QAction("clear_selected_ranges", self)
+		self.j  = QAction('enable frozen view', self)
+		self.k  = QAction('disable frozen view', self)
+		self.z  = QAction('test', self)
+
+
+
+		self.toolbar.addAction(self.a)
+		self.toolbar.addAction(self.b)
+		self.toolbar.addAction(self.c)
+		self.toolbar.addAction(self.d)      
+		self.toolbar.addAction(self.e)
+		self.toolbar.addAction(self.f)
+		self.toolbar.addAction(self.g)
+		self.toolbar.addAction(self.h)      
+		self.toolbar.addAction(self.i)
+		self.toolbar.addAction(self.j)
+		self.toolbar.addAction(self.k)
+		self.toolbar.addAction(self.z)
+
+		self.a.triggered.connect(lambda _,  : self.table.insert_row_before_selection())
+		self.b.triggered.connect(lambda _,  : self.table.insert_row_after_selection())
+		self.c.triggered.connect(lambda _,  : self.table.insert_column_before_selection())
+		self.d.triggered.connect(lambda _,  : self.table.insert_column_after_selection())
+		self.e.triggered.connect(lambda _,  : self.table.remove_selected_rows())
+		self.f.triggered.connect(lambda _,  : self.table.remove_selected_columns())
+		self.g.triggered.connect(lambda _,  : self.table.clear_selected_rows())
+		self.h.triggered.connect(lambda _,  : self.table.clear_selected_columns())
+		self.i.triggered.connect(lambda _,  : self.table.clear_selected_ranges())
+		self.j.triggered.connect(lambda _,  : self.table.froze_view_at_selection())
+		self.k.triggered.connect(lambda _,  : self.table.disable_frozen_view())
+		self.z.triggered.connect(lambda _,  : self.table.selection_check())
+		# self.addColAction.triggered.connect(self.table.add_column)
+		# self.rmvColAction.triggered.connect(self.table.rmvCol)
+		# self.testAction.triggered.connect(self.table.insert_column_at)
+		
+
+		self.addToolBar( Qt.TopToolBarArea , self.toolbar)
+		data = []
+		for r in range(50):
+			row_data = []
+			for c in range(30):
+				row_data.append("cell %s, %s" % (str(r).zfill(2), str(c).zfill(2)))
+			data.append(row_data)
+
+					
+
+		self.table.set_data(data)
+
+		self.setCentralWidget(self.table)
+		self.resize(800,800)
+
+
+
+def Debugger():
+	app  = QApplication(sys.argv)
+	form = DebugWindow()
+	form.show()
+	app.exec_()
+
+Debugger()
