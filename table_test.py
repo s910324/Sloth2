@@ -92,11 +92,8 @@ class TableWidget(QTableView):
 			self.enable_forzen_view(selected_range.top(), selected_range.left())
 			self.connect_frozen_view()		
 
-	def pph(self):
-		return (self.horizontalHeader().isVisible())
 
-	def ppv(self):
-		return (self.verticalHeader().isVisible())
+
 
 	def selection_check(self):
 		print(self.viewport().height())
@@ -287,7 +284,8 @@ class DebugWindow(QMainWindow):
 	def __init__(self, parent=None):
 		super(DebugWindow, self).__init__(parent)
 		self.table       = TableWidget(self)
-		self.toolbar     = QToolBar('main function')
+		self.toolbar1     = QToolBar('Row Column function')
+		self.toolbar2     = QToolBar('table function')
 
 		self.a  = QAction('insert_row_before_selection', self)
 		self.b  = QAction('insert_row_after_selection', self)
@@ -300,22 +298,30 @@ class DebugWindow(QMainWindow):
 		self.i  = QAction("clear_selected_ranges", self)
 		self.j  = QAction('enable frozen view', self)
 		self.k  = QAction('disable frozen view', self)
+		self.l  = QAction('smooth scroll', self)
+		self.m  = QAction('scroll by item', self)
+		self.n  = QAction('show header', self)
+		self.o  = QAction('hide header', self)
 		self.z  = QAction('test', self)
 
 
 
-		self.toolbar.addAction(self.a)
-		self.toolbar.addAction(self.b)
-		self.toolbar.addAction(self.c)
-		self.toolbar.addAction(self.d)      
-		self.toolbar.addAction(self.e)
-		self.toolbar.addAction(self.f)
-		self.toolbar.addAction(self.g)
-		self.toolbar.addAction(self.h)      
-		self.toolbar.addAction(self.i)
-		self.toolbar.addAction(self.j)
-		self.toolbar.addAction(self.k)
-		self.toolbar.addAction(self.z)
+		self.toolbar1.addAction(self.a)
+		self.toolbar1.addAction(self.b)
+		self.toolbar1.addAction(self.c)
+		self.toolbar1.addAction(self.d)      
+		self.toolbar1.addAction(self.e)
+		self.toolbar1.addAction(self.f)
+		self.toolbar1.addAction(self.g)
+		self.toolbar1.addAction(self.h)      
+		self.toolbar2.addAction(self.i)
+		self.toolbar2.addAction(self.j)
+		self.toolbar2.addAction(self.k)
+		self.toolbar2.addAction(self.l)
+		self.toolbar2.addAction(self.m)		
+		self.toolbar2.addAction(self.n)
+		self.toolbar2.addAction(self.o)				
+		self.toolbar2.addAction(self.z)
 
 		self.a.triggered.connect(lambda _,  : self.table.insert_row_before_selection())
 		self.b.triggered.connect(lambda _,  : self.table.insert_row_after_selection())
@@ -328,13 +334,19 @@ class DebugWindow(QMainWindow):
 		self.i.triggered.connect(lambda _,  : self.table.clear_selected_ranges())
 		self.j.triggered.connect(lambda _,  : self.table.froze_view_at_selection())
 		self.k.triggered.connect(lambda _,  : self.table.disable_frozen_view())
+		self.l.triggered.connect(lambda _,  : [self.table.setVerticalScrollMode(QAbstractItemView.ScrollPerPixel), self.table.setHorizontalScrollMode(QAbstractItemView.ScrollPerPixel)])
+		self.m.triggered.connect(lambda _,  : [self.table.setVerticalScrollMode(QAbstractItemView.ScrollPerItem), self.table.setHorizontalScrollMode(QAbstractItemView.ScrollPerItem)])
+		self.n.triggered.connect(lambda _,  : [self.table.horizontalHeader().show(), self.table.verticalHeader().show()])
+		self.o.triggered.connect(lambda _,  : [self.table.horizontalHeader().hide(), self.table.verticalHeader().hide()])		
 		self.z.triggered.connect(lambda _,  : self.table.selection_check())
 		# self.addColAction.triggered.connect(self.table.add_column)
 		# self.rmvColAction.triggered.connect(self.table.rmvCol)
 		# self.testAction.triggered.connect(self.table.insert_column_at)
 		
 
-		self.addToolBar( Qt.TopToolBarArea , self.toolbar)
+		self.addToolBar( Qt.TopToolBarArea , self.toolbar1)
+		self.addToolBarBreak(Qt.TopToolBarArea)
+		self.addToolBar( Qt.TopToolBarArea , self.toolbar2)
 		data = []
 		for r in range(50):
 			row_data = []
@@ -347,7 +359,7 @@ class DebugWindow(QMainWindow):
 		self.table.set_data(data)
 
 		self.setCentralWidget(self.table)
-		self.resize(800,800)
+		self.resize(1200,800)
 
 
 

@@ -22,3 +22,6 @@ delete row / column after freeze causes issues
 
 #62
 		self.left_frozen_view.setModel(self.model())
+
+# 20190324
+show header after enabling freeze view causes problem
