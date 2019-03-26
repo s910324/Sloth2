@@ -3,12 +3,15 @@ import sys
 import math
 from PyQt5.QtWidgets import *
 from PyQt5.QtCore    import *
+from PyQt5.QtGui     import *
 from CursorTracker   import CursorTracker
 
 class FreezeView(QTableView):
 	horizontal_header_resized = pyqtSignal(int, int, int)
 	vertical_header_resized   = pyqtSignal(int, int, int)
-
+	mouse_move_signal         = pyqtSignal(QMouseEvent)
+	mouse_press_signal        = pyqtSignal(QMouseEvent)
+	mouse_release_signal      = pyqtSignal(QMouseEvent)
 	top, left, corner         = 0, 1, 2
 	def __init__(self, orentation, start_column_index, end_column_index, start_row_index, end_row_index, parent):
 		QTableView.__init__(self, parent)
@@ -83,6 +86,10 @@ class FreezeView(QTableView):
 		parent.row_removed.connect(self.remove_row_at)
 		parent.column_inserted.connect(self.insert_column_at)
 		parent.row_inserted.connect(self.insert_row_at)
+
+		self.mouse_press_signal.connect(parent.cursor_tracker.set_anchor)
+		self.mouse_move_signal.connect(parent.cursor_tracker.set_pivot)
+		self.mouse_release_signal.connect(parent.cursor_tracker.clear_points)
 		self.setSelectionModel(parent.selectionModel())
 
 
@@ -251,24 +258,16 @@ class FreezeView(QTableView):
 		# self.mouse_anchor.__setattr__(  "rect_w", None)
 		# self.mouse_anchor.__setattr__(  "rect_h", None)
 
-	# def mouseMoveEvent (self, event):
-	# 	print(event, type(event))
-
-	# def mousePressEvent(self, event):
-	# 	pass
-	# 	# self.mouse_anchor.anchor_x = event.x()
-	# 	# self.mouse_anchor.anchor_y = event.y()
-	# 	# self.mouse_anchor.x        = event.x()
-	# 	# self.mouse_anchor.y        = event.y()
-
-	# def mouseReleaseEvent (self, event):
-	# 	print("check siblin and parent for click+move event")
-
-	# def enterEvent(self, event):
-	# 	print("enterchildEvent")
+	def mouseMoveEvent (self, event):
+		QTableView.mouseMoveEvent (self, event)
+		self.mouse_move_signal.emit(event)
 
 
+	def mousePressEvent(self, event):
+		QTableView.mousePressEvent (self, event)
+		self.mouse_press_signal.emit(event)
 
-	# def leaveEvent(self, event):
-	# 	print("leavechildEvent")
+	def mouseReleaseEvent (self, event):
+		QTableView.mouseReleaseEvent (self, event)
+		self.mouse_release_signal.emit(event)
 

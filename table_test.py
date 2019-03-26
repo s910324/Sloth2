@@ -62,7 +62,8 @@ class TableWidget(QTableView):
 		if self.top_frozen_view    : self.top_frozen_view.disconnect_to_views()
 		if self.left_frozen_view   : self.left_frozen_view.disconnect_to_views()
 		if self.corner_frozen_view : self.corner_frozen_view.disconnect_to_views()
-		self.top_frozen_view    = None, 
+		self.cursor_tracker     = None
+		self.top_frozen_view    = None
 		self.left_frozen_view   = None
 		self.corner_frozen_view = None
 		self.enable_frozen_view = False
@@ -281,13 +282,22 @@ class TableWidget(QTableView):
 		self.update_data_model()	
 	
 
+	def mousePressEvent (self, event):
+		QTableView.mousePressEvent(self, event)
+		print("mousePressEvent", event.button())
+
+	def mouseReleaseEvent (self, event):
+		QTableView.mouseReleaseEvent(self, event)
+		print("mouseReleaseEvent", event.button())
+
 	def enterEvent(self, event):
+		QTableView.enterEvent(self, event)
 		print("enterEvent")
 
-
-
-	def leaveEvent(self, event):
-		print("leaveEvent")
+	def mouseMoveEvent(self, event):
+		QTableView.mouseMoveEvent(self, event)
+		#the returned value is always Qt.NoButton for mouse move events.
+		print("mouseMoveEvent:", event.button(), event.x(), event.y())
 
 
 class DebugWindow(QMainWindow):

@@ -29,3 +29,5 @@
 # 20190326
 	delete row / column after freeze causes issues
 	cross Freezeview selection mouse event manager is required.
+	click and move events cannot penetrate overlapping widgets, which needs to be handled saperately
+		|>partially solved using CursorTracer
