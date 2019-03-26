@@ -28,3 +28,4 @@
 
 # 20190326
 	delete row / column after freeze causes issues
+	cross Freezeview selection mouse event manager is required.

@@ -3,7 +3,7 @@ import sys
 import math
 from PyQt5.QtWidgets import *
 from PyQt5.QtCore    import *
-
+from CursorTracker   import CursorTracker
 
 class FreezeView(QTableView):
 	horizontal_header_resized = pyqtSignal(int, int, int)
@@ -24,11 +24,11 @@ class FreezeView(QTableView):
 		self.freeze_hiddin_row    = []
 		self.freeze_hiddin_column = []
 		self.parent_scroll_mode   = {"vertical":None, "horizontal":None}
-	
-
+		self.mouse_anchor         = object()
+		self.initiallize_mouse_anchor()
 		self.initiallize_header()
 		self.setStyleSheet('''border: none;''')
-		self.setFocusPolicy(Qt.NoFocus)
+		# self.setFocusPolicy(Qt.NoFocus)
 		self.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
 		self.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOff)	
 		self.show()
@@ -122,6 +122,7 @@ class FreezeView(QTableView):
 		# self.updateFrozenTableGeometry()/////////////////////////////////////required
 
 	def moveCursor(self, cursorAction, modifiers):
+		print("AAAAAAAA")
 		parent = self.parent 
 		current = QTableView.moveCursor(parent, cursorAction, modifiers)
 		if cursorAction == parent.MoveLeft and current.column() > 1 and parent.visualRect(current).topLeft().x() < (self.columnWidth(0) + self.columnWidth(1)):
@@ -130,7 +131,7 @@ class FreezeView(QTableView):
 		return current
 		
 	def initiallize_geometry(self):
-		self.initiallize_header()
+		self.initiallize_header() #init_header if parent header visibility change
 		self.setModel(self.parent.model())
 		self.set_scroll_mode_constrain()
 
@@ -238,4 +239,36 @@ class FreezeView(QTableView):
 			self.setColumnHidden(self.end_column_index, False)
 			self.initiallize_geometry()
 
-			
+	def initiallize_mouse_anchor(self):
+		pass
+		# self.mouse_anchor.__dict__["anchor_x"] = None
+		# self.mouse_anchor.__setattr__("anchor_x", None)
+		# self.mouse_anchor.__setattr__("anchor_y", None)
+		# self.mouse_anchor.__setattr__(       "x", None)
+		# self.mouse_anchor.__setattr__(       "y", None)
+		# self.mouse_anchor.__setattr__( "pivot_y", None)
+		# self.mouse_anchor.__setattr__( "pivot_y", None)
+		# self.mouse_anchor.__setattr__(  "rect_w", None)
+		# self.mouse_anchor.__setattr__(  "rect_h", None)
+
+	# def mouseMoveEvent (self, event):
+	# 	print(event, type(event))
+
+	# def mousePressEvent(self, event):
+	# 	pass
+	# 	# self.mouse_anchor.anchor_x = event.x()
+	# 	# self.mouse_anchor.anchor_y = event.y()
+	# 	# self.mouse_anchor.x        = event.x()
+	# 	# self.mouse_anchor.y        = event.y()
+
+	# def mouseReleaseEvent (self, event):
+	# 	print("check siblin and parent for click+move event")
+
+	# def enterEvent(self, event):
+	# 	print("enterchildEvent")
+
+
+
+	# def leaveEvent(self, event):
+	# 	print("leavechildEvent")
+

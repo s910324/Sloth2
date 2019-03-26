@@ -10,8 +10,10 @@ from PyQt5.QtGui     import *
 from HeaderItem      import HHeaderItem, VHeaderItem
 from DataModel       import DataModel
 from FreezeView      import FreezeView
+from CursorTracker   import CursorTracker
 from functools       import reduce
 from itertools       import chain
+
 class TableWidget(QTableView):
 	trigger = pyqtSignal()
 	column_removed            = pyqtSignal(int)
@@ -26,21 +28,18 @@ class TableWidget(QTableView):
 		self.left_frozen_view    = None
 		self.corner_frozen_view  = None
 		self.top_frozen_view     = None
+		self.cursor_tracker      = None
 		self.update_data_model()
 		self.setHorizontalScrollMode(QAbstractItemView.ScrollPerPixel)
 		self.setVerticalScrollMode(  QAbstractItemView.ScrollPerPixel)
-		self.horizontalHeader().geometriesChanged.connect(lambda :print('a'))
-
-	def showEvent(self, event):
-		QTableView.showEvent(self, event)
-	
+		
 		
 	def enable_forzen_view(self, row_index, column_index):
 		if self.enable_frozen_view == True : return
 		start_row_index           = self.rowAt(0)
 		start_column_index        = self.columnAt(0)
   
-
+		self.cursor_tracker       = CursorTracker(self)
 		self.top_frozen_view      = FreezeView(FreezeView.top,    start_column_index, self.column_counts(), start_row_index,         row_index, self) if row_index                        > 0 else None
 		self.left_frozen_view     = FreezeView(FreezeView.left,   start_column_index,         column_index, start_row_index, self.row_counts(), self) if column_index                     > 0 else None
 		self.corner_frozen_view   = FreezeView(FreezeView.corner, start_column_index,         column_index, start_row_index,         row_index, self) if (column_index > 0 and row_index) > 0 else None
@@ -262,6 +261,8 @@ class TableWidget(QTableView):
 		self.data_updated.emit(self.model())
 		
 
+	def showEvent(self, event):
+		QTableView.showEvent(self, event)
 
 
 	def keyPressEvent(self, event):
@@ -278,7 +279,15 @@ class TableWidget(QTableView):
 		
 	def resizeEvent(self, event):
 		self.update_data_model()	
+	
 
+	def enterEvent(self, event):
+		print("enterEvent")
+
+
+
+	def leaveEvent(self, event):
+		print("leaveEvent")
 
 
 class DebugWindow(QMainWindow):
