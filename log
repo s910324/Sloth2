@@ -1,27 +1,30 @@
-#0
-delete row / column after freeze causes issues
+#20190324
+	double initiallize issue (fixed)
+		#229, should change to < index
+			def insert_column_at(self, column_index, column_counts = 1):
+				for new_columns in range(column_counts):
 
-#229, should change to < index
-	def insert_column_at(self, column_index, column_counts = 1):
-		for new_columns in range(column_counts):
+		#266, move to signam connection in freeze view
+				if self.top_frozen_view:
+					self.top_frozen_view.initiallize_geometry()
+				if self.corner_frozen_view:
+					self.corner_frozen_view.initiallize_geometry()
+				if self.left_frozen_view:
+					self.left_frozen_view.initiallize_geometry()
 
-#266, move to signam connection in freeze view
-		if self.top_frozen_view:
-			self.top_frozen_view.initiallize_geometry()
-		if self.corner_frozen_view:
-			self.corner_frozen_view.initiallize_geometry()
-		if self.left_frozen_view:
-			self.left_frozen_view.initiallize_geometry()
+		#52, same as above
+				self.top_frozen_view.setModel(self.model())
+				self.corner_frozen_view.setModel(self.model())
+				self.left_frozen_view.setModel(self.model())
+		#58
+				self.top_frozen_view.setModel(self.model())
 
-#52, same as above
-		self.top_frozen_view.setModel(self.model())
-		self.corner_frozen_view.setModel(self.model())
-		self.left_frozen_view.setModel(self.model())
-#58
-		self.top_frozen_view.setModel(self.model())
+		#62
+				self.left_frozen_view.setModel(self.model())
 
-#62
-		self.left_frozen_view.setModel(self.model())
+# 20190325
+	show header after enabling freeze view causes problem
+	should customize hide header event and connect to freeze view initiallize_geometry(fixed)
 
-# 20190324
-show header after enabling freeze view causes problem
+# 20190326
+	delete row / column after freeze causes issues

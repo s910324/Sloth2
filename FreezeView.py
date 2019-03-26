@@ -25,18 +25,8 @@ class FreezeView(QTableView):
 		self.freeze_hiddin_column = []
 		self.parent_scroll_mode   = {"vertical":None, "horizontal":None}
 	
-		if orentation == FreezeView.left:
-			self.horizontalHeader().setHidden(parent.horizontalHeader().isHidden())
-			self.verticalHeader().hide()
 
-		if orentation == FreezeView.top:
-			self.verticalHeader().setHidden(parent.verticalHeader().isHidden())
-			self.horizontalHeader().hide()
-			
-		if orentation == FreezeView.corner:
-			self.horizontalHeader().hide()
-			self.verticalHeader().hide()
-
+		self.initiallize_header()
 		self.setStyleSheet('''border: none;''')
 		self.setFocusPolicy(Qt.NoFocus)
 		self.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
@@ -50,14 +40,24 @@ class FreezeView(QTableView):
 		#must be called after show event, or the visibility of header will always return false
 		self.initiallize_geometry()
 
+	def initiallize_header(self):
+		if self.orentation == FreezeView.left:
+			self.horizontalHeader().setHidden(self.parent.horizontalHeader().isHidden())
+			self.verticalHeader().hide()
+
+		if self.orentation == FreezeView.top:
+			self.verticalHeader().setHidden(self.parent.verticalHeader().isHidden())
+			self.horizontalHeader().hide()
+			
+		if self.orentation == FreezeView.corner:
+			self.horizontalHeader().hide()
+			self.verticalHeader().hide()
+
 	def connect_to_views(self):
-		print("c: ", self.verticalHeader().isVisible(), self.horizontalHeader().isVisible())
 		self.resizable = True
 		parent         = self.parent
-		print("b: ", self.verticalHeader().isVisible(), self.horizontalHeader().isVisible())
 		self.horizontalHeader().sectionResized.connect(lambda column, old_size, new_size : self.increament_width(  new_size - old_size))
 		self.verticalHeader().sectionResized.connect  (lambda    row, old_size, new_size : self.increament_height( new_size - old_size))
-		print("a: ", self.verticalHeader().isVisible(), self.horizontalHeader().isVisible())
 		if self.orentation == FreezeView.left:
 			if parent.corner_frozen_view : self.horizontalHeader().sectionResized.connect(  lambda column, old_size, new_size : parent.corner_frozen_view.setColumnWidth(column, new_size))
 			if parent.top_frozen_view    : self.horizontalHeader().sectionResized.connect(  lambda column, old_size, new_size : parent.top_frozen_view.setColumnWidth(column, new_size))
@@ -76,14 +76,16 @@ class FreezeView(QTableView):
 			if parent                    : parent.verticalHeader().sectionResized.connect(self.initiallize_geometry)
 			if parent                    : parent.horizontalScrollBar().valueChanged.connect(self.horizontalScrollBar().setValue)	
 			self.horizontalScrollBar().valueChanged.connect(parent.horizontalScrollBar().setValue)
-
+		parent.horizontalHeader().geometriesChanged.connect(self.initiallize_geometry)
+		parent.verticalHeader().geometriesChanged.connect(self.initiallize_geometry)
 		parent.data_updated.connect(self.initiallize_geometry)
 		parent.column_removed.connect(self.remove_column_at)
 		parent.row_removed.connect(self.remove_row_at)
 		parent.column_inserted.connect(self.insert_column_at)
 		parent.row_inserted.connect(self.insert_row_at)
 		self.setSelectionModel(parent.selectionModel())
-		
+
+
 
 	def disconnect_to_views(self):
 		self.resizable = False
@@ -128,6 +130,10 @@ class FreezeView(QTableView):
 		return current
 		
 	def initiallize_geometry(self):
+		self.initiallize_header()
+		self.setModel(self.parent.model())
+		self.set_scroll_mode_constrain()
+
 		parent               = self.parent
 		x_header_offset      = parent.verticalHeader().width()    *  (self.verticalHeader().isHidden()   - parent.verticalHeader().isHidden())
 		y_header_offset      = parent.horizontalHeader().height() *  (self.horizontalHeader().isHidden() - parent.horizontalHeader().isHidden())
@@ -135,8 +141,7 @@ class FreezeView(QTableView):
 		y                    = parent.frameWidth() + y_header_offset
 		w                    = parent.verticalHeader().width()    *  self.verticalHeader().isVisible()
 		h                    = parent.horizontalHeader().height() *  self.horizontalHeader().isVisible()
-		self.setModel(parent.model())
-		self.set_scroll_mode_constrain()
+
 		print (self.orentation, w, h, self.verticalHeader().isVisible(), self.horizontalHeader().isVisible())
 		if self.orentation == FreezeView.top:
 			w =  w + parent.viewport().width()   
@@ -150,7 +155,6 @@ class FreezeView(QTableView):
 		self.hide_freezed_area()
 		self.set_size( x, y, w, h)
 		self.relesae_scroll_mode_constrain()
-		print("d: ", self.verticalHeader().isVisible(), self.horizontalHeader().isVisible())
 		
 	def set_scroll_mode_constrain(self):
 		parent = self.parent
@@ -204,7 +208,6 @@ class FreezeView(QTableView):
 
 	def increament_width(self, delta_width):
 		if self.resizable:
-			print(delta_width)
 			self.setFixedWidth(self.width() + delta_width)
 			self.updateGeometry()
 		

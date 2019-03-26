@@ -29,6 +29,7 @@ class TableWidget(QTableView):
 		self.update_data_model()
 		self.setHorizontalScrollMode(QAbstractItemView.ScrollPerPixel)
 		self.setVerticalScrollMode(  QAbstractItemView.ScrollPerPixel)
+		self.horizontalHeader().geometriesChanged.connect(lambda :print('a'))
 
 	def showEvent(self, event):
 		QTableView.showEvent(self, event)
