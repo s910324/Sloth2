@@ -386,7 +386,18 @@ class DebugWindow(QMainWindow):
 def Debugger():
 	app  = QApplication(sys.argv)
 	form = DebugWindow()
+	QFontDatabase.addApplicationFont("./res/font/Inconsolata-Regular.ttf");
+	f = QFile("./stylesheet.css")
+	f.open(QFile.ReadOnly | QFile.Text)
+	ts = QTextStream(f)
+	stylesheet = ts.readAll()
+	print(stylesheet)
+	app.setStyleSheet(stylesheet)
 	form.show()
 	app.exec_()
+	
+
+
+
 
 Debugger()

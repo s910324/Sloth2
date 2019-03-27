@@ -31,3 +31,10 @@
 	cross Freezeview selection mouse event manager is required.
 	click and move events cannot penetrate overlapping widgets, which needs to be handled saperately
 		|>partially solved using CursorTracer
+		
+# 20190327
+	freeze view need additional init germetry after changing scroll mode
+	
+	need to be able to resize mutiple row/col if resize event occur under multiselection 
+	
+	multiple row/col resize to fit content

@@ -1,0 +1,62 @@
+QWidget{
+	font: 8pt "Inconsolata";
+}
+
+TableWidget, FreezeView {
+	gridline-color: #C8C8C8;
+}
+
+TableWidget::item, FreezeView::item {
+	background-color: #FFFFFF;
+}
+
+
+
+TableWidget::item:selected:active,  FreezeView::item:selected:active  {
+	background-color: #E8E8E8;
+	color: #000000;
+}
+
+TableWidget::item:selected:!active, FreezeView::item:selected:!active {
+	background-color: #E8E8E8;
+	color: #000000;
+}
+
+
+
+QTableCornerButton::section {
+	background-color: #F8F8F8;
+	border: 1px solid #C8C8C8;
+}
+
+QHeaderView::section {
+	background-color: #F8F8F8;
+	border-style: none;
+	border-bottom: 1px solid #C8C8C8;
+	border-right: 1px solid #C8C8C8;
+}
+
+QHeaderView::section:vertical{
+	padding-left:  10px;
+	padding-right: 10px;
+}
+
+QHeaderView::section:horizontal{
+	padding-top:  3px;
+	padding-bottom: 3px;
+}
+
+QHeaderView::section:horizontal{
+	border-top: 1px solid #C8C8C8;
+}
+
+QHeaderView::section:vertical{
+	border-left: 1px solid #C8C8C8;
+}
+
+QHeaderView::section:checked:horizontal{
+	border-bottom: 1px solid #22ff22;
+}
+QHeaderView::section:checked:vertical{
+	border-right: 1px solid #22ff22;
+}

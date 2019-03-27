@@ -26,11 +26,14 @@ class FreezeView(QTableView):
 		self.orentation           = orentation
 		self.freeze_hiddin_row    = []
 		self.freeze_hiddin_column = []
+		self.border_width         = 1
+		self.border_color		  = "#ccffcc"
 		self.parent_scroll_mode   = {"vertical":None, "horizontal":None}
 		self.mouse_anchor         = object()
 		self.initiallize_mouse_anchor()
 		self.initiallize_header()
-		self.setStyleSheet('''border: none;''')
+
+		self.set_border_style()
 		# self.setFocusPolicy(Qt.NoFocus)
 		self.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
 		self.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOff)	
@@ -42,6 +45,38 @@ class FreezeView(QTableView):
 		#must initiallize geroetry before resizable is set true, otherwise will receive "set 0 width error"
 		#must be called after show event, or the visibility of header will always return false
 		self.initiallize_geometry()
+
+	def set_border_style(self):
+		if self.orentation == FreezeView.left:
+			self.setStyleSheet('''
+				FreezeView{
+					border: none;
+					border-top: 0px;
+					border-left: 0px;
+					border-right: %dpx solid %s;
+					border-bottom: 0px;
+			}''' % (self.border_width, self.border_color))
+
+		if self.orentation == FreezeView.top:
+			self.setStyleSheet('''
+				FreezeView{
+					border: none;
+
+					border-top: 0px;
+					border-left: 0px;
+					border-right: 0px;
+					border-bottom: %dpx solid %s;
+			}''' % (self.border_width, self.border_color))
+
+		if self.orentation == FreezeView.corner:
+			self.setStyleSheet('''
+				FreezeView{
+					border: none;
+					border-top: 0px;
+					border-left: 0px;
+					border-right: %dpx solid  %s;
+					border-bottom: %dpx solid  %s;
+			}''' %(self.border_width, self.border_color, self.border_width, self.border_color))
 
 	def initiallize_header(self):
 		if self.orentation == FreezeView.left:
@@ -145,21 +180,21 @@ class FreezeView(QTableView):
 		parent               = self.parent
 		x_header_offset      = parent.verticalHeader().width()    *  (self.verticalHeader().isHidden()   - parent.verticalHeader().isHidden())
 		y_header_offset      = parent.horizontalHeader().height() *  (self.horizontalHeader().isHidden() - parent.horizontalHeader().isHidden())
-		x                    = parent.frameWidth() + x_header_offset
-		y                    = parent.frameWidth() + y_header_offset
+		x                    = parent.frameWidth() + x_header_offset 
+		y                    = parent.frameWidth() + y_header_offset 
 		w                    = parent.verticalHeader().width()    *  self.verticalHeader().isVisible()
 		h                    = parent.horizontalHeader().height() *  self.horizontalHeader().isVisible()
 
 		print (self.orentation, w, h, self.verticalHeader().isVisible(), self.horizontalHeader().isVisible())
 		if self.orentation == FreezeView.top:
 			w =  w + parent.viewport().width()   
-			h =  h + sum([parent.rowHeight(row_index)      for row_index    in range(   self.start_row_index,      self.end_row_index)])                             
+			h =  h + sum([parent.rowHeight(row_index)      for row_index    in range(   self.start_row_index,      self.end_row_index)]) + self.border_width                   
 		if self.orentation == FreezeView.left:
-			w =  w + sum([parent.columnWidth(column_index) for column_index in range(self.start_column_index,   self.end_column_index)]) 
+			w =  w + sum([parent.columnWidth(column_index) for column_index in range(self.start_column_index,   self.end_column_index)]) + self.border_width
 			h =  h + parent.viewport().height()
 		if self.orentation == FreezeView.corner:
-			w =  w + sum([parent.columnWidth(column_index) for column_index in range(self.start_column_index,   self.end_column_index)]) 
-			h =  h + sum([parent.rowHeight(row_index)      for row_index    in range(   self.start_row_index,      self.end_row_index)])
+			w =  w + sum([parent.columnWidth(column_index) for column_index in range(self.start_column_index,   self.end_column_index)]) + self.border_width
+			h =  h + sum([parent.rowHeight(row_index)      for row_index    in range(   self.start_row_index,      self.end_row_index)]) + self.border_width
 		self.hide_freezed_area()
 		self.set_size( x, y, w, h)
 		self.relesae_scroll_mode_constrain()
