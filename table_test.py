@@ -21,6 +21,8 @@ class TableWidget(QTableView):
 	column_inserted           = pyqtSignal(int)
 	row_inserted              = pyqtSignal(int)
 	data_updated              = pyqtSignal(DataModel)
+	vscroll_mode_changed      = pyqtSignal(QAbstractItemView.ScrollMode)
+	hscroll_mode_changed      = pyqtSignal(QAbstractItemView.ScrollMode)
 	def __init__(self, data = [], parent=None,  *args):
 		QTableView.__init__(self, parent, *args)
 		self.enable_frozen_view  = False
@@ -299,6 +301,13 @@ class TableWidget(QTableView):
 		#the returned value is always Qt.NoButton for mouse move events.
 		print("mouseMoveEvent:", event.button(), event.x(), event.y())
 
+	def setHorizontalScrollMode(self, scroll_mode):
+		QTableView.setHorizontalScrollMode(self, scroll_mode)
+		self.hscroll_mode_changed.emit(scroll_mode)
+
+	def setVerticalScrollMode(self, scroll_mode):
+		QTableView.setVerticalScrollMode(self, scroll_mode)
+		self.vscroll_mode_changed.emit(scroll_mode)
 
 class DebugWindow(QMainWindow):
 	def __init__(self, parent=None):

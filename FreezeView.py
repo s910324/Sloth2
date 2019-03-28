@@ -34,7 +34,6 @@ class FreezeView(QTableView):
 		self.initiallize_header()
 
 		self.set_border_style()
-		# self.setFocusPolicy(Qt.NoFocus)
 		self.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
 		self.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOff)	
 		self.show()
@@ -122,6 +121,9 @@ class FreezeView(QTableView):
 		parent.column_inserted.connect(self.insert_column_at)
 		parent.row_inserted.connect(self.insert_row_at)
 
+		parent.vscroll_mode_changed.connect(self.setVerticalScrollMode)
+		parent.hscroll_mode_changed.connect(self.setHorizontalScrollMode)
+
 		self.mouse_press_signal.connect(parent.cursor_tracker.set_anchor)
 		self.mouse_move_signal.connect(parent.cursor_tracker.set_pivot)
 		self.mouse_release_signal.connect(parent.cursor_tracker.clear_points)
@@ -149,7 +151,14 @@ class FreezeView(QTableView):
 		parent.column_removed.disconnect(self.remove_column_at)
 		parent.row_removed.disconnect(self.remove_row_at)
 		parent.column_inserted.disconnect(self.insert_column_at)
-		parent.row_inserted.disconnect(self.insert_row_at)			
+		parent.row_inserted.disconnect(self.insert_row_at)
+
+		parent.vscroll_mode_changed.disconnect(self.setVerticalScrollMode)
+		parent.hscroll_mode_changed.disconnect(self.setHorizontalScrollMode)
+
+		self.mouse_press_signal.disconnect(parent.cursor_tracker.set_anchor)
+		self.mouse_move_signal.disconnect(parent.cursor_tracker.set_pivot)
+		self.mouse_release_signal.disconnect(parent.cursor_tracker.clear_points)
 		self.show_freezed_area()
 		self.deleteLater()
 
@@ -198,7 +207,8 @@ class FreezeView(QTableView):
 		self.hide_freezed_area()
 		self.set_size( x, y, w, h)
 		self.relesae_scroll_mode_constrain()
-		
+	
+
 	def set_scroll_mode_constrain(self):
 		parent = self.parent
 		self.parent_scroll_mode = {"vertical":parent.verticalScrollMode(), "horizontal":parent.horizontalScrollMode()}
@@ -206,6 +216,7 @@ class FreezeView(QTableView):
 		parent.setHorizontalScrollMode(QAbstractItemView.ScrollPerItem)
 		self.setVerticalScrollMode(QAbstractItemView.ScrollPerItem)
 		self.setHorizontalScrollMode(QAbstractItemView.ScrollPerItem)
+
 	
 	def relesae_scroll_mode_constrain(self):
 		parent = self.parent
@@ -213,6 +224,7 @@ class FreezeView(QTableView):
 		parent.setHorizontalScrollMode(self.parent_scroll_mode["horizontal"])
 		self.setVerticalScrollMode(self.parent_scroll_mode["vertical"])
 		self.setHorizontalScrollMode(self.parent_scroll_mode["horizontal"])
+		# need to set self scroll mode because the scroll mode binding happens after init_geometry
 
 	def hide_freezed_area(self):
 		parent = self.parent
@@ -269,16 +281,18 @@ class FreezeView(QTableView):
 			self.end_column_index -= 1
 			self.initiallize_geometry()
 
-	def insert_row_at(self, row_index):
+	def insert_row_at(self, row_index, row_counts = 1):
 		if row_index in range(self.start_row_index, self.end_row_index):
-			self.end_row_index += 1
-			self.setRowHidden(self.end_row_index, False)
+			self.end_row_index += row_counts
+			for row_index in range(self.end_row_index-1, self.end_row_index+row_counts-1):
+				self.setRowHidden(row_index, False)
 			self.initiallize_geometry()
 
 	def insert_column_at(self, column_index, column_counts = 1):
 		if column_index in range(self.start_column_index, self.end_column_index):
-			self.end_column_index += 1
-			self.setColumnHidden(self.end_column_index, False)
+			self.end_column_index += column_counts
+			for column_index in range(self.end_column_index-1, self.end_column_index+column_counts-1):
+				self.setColumnHidden(column_index, False)
 			self.initiallize_geometry()
 
 	def initiallize_mouse_anchor(self):

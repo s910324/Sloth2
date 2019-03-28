@@ -1,40 +1,50 @@
 #20190324
-	double initiallize issue (fixed)
-		#229, should change to < index
-			def insert_column_at(self, column_index, column_counts = 1):
-				for new_columns in range(column_counts):
+	# double initiallize issue (fixed)
+	# 	#229, should change to < index
+	# 		def insert_column_at(self, column_index, column_counts = 1):
+	# 			for new_columns in range(column_counts):
 
-		#266, move to signam connection in freeze view
-				if self.top_frozen_view:
-					self.top_frozen_view.initiallize_geometry()
-				if self.corner_frozen_view:
-					self.corner_frozen_view.initiallize_geometry()
-				if self.left_frozen_view:
-					self.left_frozen_view.initiallize_geometry()
+	# 	#266, move to signam connection in freeze view
+	# 			if self.top_frozen_view:
+	# 				self.top_frozen_view.initiallize_geometry()
+	# 			if self.corner_frozen_view:
+	# 				self.corner_frozen_view.initiallize_geometry()
+	# 			if self.left_frozen_view:
+	# 				self.left_frozen_view.initiallize_geometry()
 
-		#52, same as above
-				self.top_frozen_view.setModel(self.model())
-				self.corner_frozen_view.setModel(self.model())
-				self.left_frozen_view.setModel(self.model())
-		#58
-				self.top_frozen_view.setModel(self.model())
+	# 	#52, same as above
+	# 			self.top_frozen_view.setModel(self.model())
+	# 			self.corner_frozen_view.setModel(self.model())
+	# 			self.left_frozen_view.setModel(self.model())
+	# 	#58
+	# 			self.top_frozen_view.setModel(self.model())
 
-		#62
-				self.left_frozen_view.setModel(self.model())
+	# 	#62
+	# 			self.left_frozen_view.setModel(self.model())
 
 # 20190325
-	show header after enabling freeze view causes problem
-	should customize hide header event and connect to freeze view initiallize_geometry(fixed)
+	# show header after enabling freeze view causes problem(fixed)
+	# 	|> customize hide header event and connect to freeze view initiallize_geometry
 
 # 20190326
-	delete row / column after freeze causes issues
-	cross Freezeview selection mouse event manager is required.
-	click and move events cannot penetrate overlapping widgets, which needs to be handled saperately
-		|>partially solved using CursorTracer
+	# delete/insert row / column after freeze causes issues
+	# 	|>  solved by setting visibility to items at last row/col(fixed)
+
+	# cross Freezeview selection mouse event manager is required.
+	# click and move events cannot penetrate overlapping widgets, which needs to be handled saperately
+	# 	|> solved by using CursorTracer(fixed)
+
+
 		
 # 20190327
-	freeze view need additional init germetry after changing scroll mode
+	# freeze view need additional init germetry after changing scroll mode
+	# 	|> scroll mode binding take cares of this(fixed)
 	
 	need to be able to resize mutiple row/col if resize event occur under multiselection 
 	
 	multiple row/col resize to fit content
+
+# 20190327
+	Cursor tracer currently cannot manage cross view selection correctly if parent widget is not at neutral scroll position
+
+	sorting and filtering on columns is currently not avaliable
