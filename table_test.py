@@ -313,8 +313,10 @@ class DebugWindow(QMainWindow):
 	def __init__(self, parent=None):
 		super(DebugWindow, self).__init__(parent)
 		self.table       = TableWidget(self)
+
 		self.toolbar1     = QToolBar('Row Column function')
 		self.toolbar2     = QToolBar('table function')
+		self.toolbar3     = QToolBar('table formatting')
 
 		self.a  = QAction('insert_row_before_selection', self)
 		self.b  = QAction('insert_row_after_selection', self)
@@ -331,7 +333,18 @@ class DebugWindow(QMainWindow):
 		self.m  = QAction('scroll by item', self)
 		self.n  = QAction('show header', self)
 		self.o  = QAction('hide header', self)
-		self.z  = QAction('test', self)
+		self.p  = QAction('set bold', self)
+		self.q  = QAction('set italic', self)
+		self.r  = QAction('set underlined', self)
+		self.s  = QAction('align left', self)
+		self.t  = QAction('align center', self)
+		self.u  = QAction('align right', self)
+		self.v  = QAction('align top', self)
+		self.w  = QAction('align middle', self)
+		self.x  = QAction('align bottom', self)
+		self.y  = QAction('set bd color', self)
+		self.z  = QAction('set txt color', self)
+		self.zz = QAction('test', self)
 
 
 
@@ -349,8 +362,19 @@ class DebugWindow(QMainWindow):
 		self.toolbar2.addAction(self.l)
 		self.toolbar2.addAction(self.m)		
 		self.toolbar2.addAction(self.n)
-		self.toolbar2.addAction(self.o)				
-		self.toolbar2.addAction(self.z)
+		self.toolbar2.addAction(self.o)
+		self.toolbar2.addAction(self.zz)
+		self.toolbar3.addAction(self.p)
+		self.toolbar3.addAction(self.q)
+		self.toolbar3.addAction(self.r)
+		self.toolbar3.addAction(self.s)
+		self.toolbar3.addAction(self.t)
+		self.toolbar3.addAction(self.u)
+		self.toolbar3.addAction(self.v)
+		self.toolbar3.addAction(self.w)
+		self.toolbar3.addAction(self.x)
+		self.toolbar3.addAction(self.y)
+		self.toolbar3.addAction(self.z)
 
 		self.a.triggered.connect(lambda _,  : self.table.insert_row_before_selection())
 		self.b.triggered.connect(lambda _,  : self.table.insert_row_after_selection())
@@ -367,7 +391,7 @@ class DebugWindow(QMainWindow):
 		self.m.triggered.connect(lambda _,  : [self.table.setVerticalScrollMode(QAbstractItemView.ScrollPerItem), self.table.setHorizontalScrollMode(QAbstractItemView.ScrollPerItem)])
 		self.n.triggered.connect(lambda _,  : [self.table.horizontalHeader().show(), self.table.verticalHeader().show()])
 		self.o.triggered.connect(lambda _,  : [self.table.horizontalHeader().hide(), self.table.verticalHeader().hide()])		
-		self.z.triggered.connect(lambda _,  : self.table.selection_check())
+		self.zz.triggered.connect(lambda _,  : self.table.selection_check())
 		# self.addColAction.triggered.connect(self.table.add_column)
 		# self.rmvColAction.triggered.connect(self.table.rmvCol)
 		# self.testAction.triggered.connect(self.table.insert_column_at)
@@ -376,6 +400,8 @@ class DebugWindow(QMainWindow):
 		self.addToolBar( Qt.TopToolBarArea , self.toolbar1)
 		self.addToolBarBreak(Qt.TopToolBarArea)
 		self.addToolBar( Qt.TopToolBarArea , self.toolbar2)
+		self.addToolBarBreak(Qt.TopToolBarArea)
+		self.addToolBar( Qt.TopToolBarArea , self.toolbar3)		
 		data = []
 		for r in range(50):
 			row_data = []

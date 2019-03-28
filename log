@@ -48,3 +48,7 @@
 	Cursor tracer currently cannot manage cross view selection correctly if parent widget is not at neutral scroll position
 
 	sorting and filtering on columns is currently not avaliable
+
+	data conditional theming is currently not avaliable
+
+	
