@@ -8,7 +8,7 @@ from PyQt5.QtWidgets import *
 from PyQt5.QtCore    import *
 from PyQt5.QtGui     import *
 from HeaderItem      import HHeaderItem, VHeaderItem
-from DataModel       import DataModel
+from DataModel       import DataModel, DataItemModel
 from FreezeView      import FreezeView
 from CursorTracker   import CursorTracker
 from functools       import reduce
@@ -26,7 +26,7 @@ class TableWidget(QTableView):
 	def __init__(self, data = [], parent=None,  *args):
 		QTableView.__init__(self, parent, *args)
 		self.enable_frozen_view  = False
-		self.data_model          = DataModel(self)
+		self.data_model          = DataItemModel(self)
 		self.left_frozen_view    = None
 		self.corner_frozen_view  = None
 		self.top_frozen_view     = None
@@ -85,7 +85,8 @@ class TableWidget(QTableView):
 
 	def set_data(self, data):
 		if data:
-			self.data_model.data_cached = data
+			# self.data_model.data_cached = data
+			self.data_model.load_data(data)
 			self.update_data_model()
 	
 	def froze_view_at_selection(self):
@@ -101,7 +102,8 @@ class TableWidget(QTableView):
 	def selection_check(self):
 		print(self.viewport().height())
 		print(self.rowAt(0))
-
+		# self.setIndexWidget(self.model().index(0, 0), QTextEdit())
+		print(self.indexWidget(self.model().index(0, 0)))
 		# self.setItemDelegateForRow() QAbstractItemDelegate
 
 
@@ -262,7 +264,15 @@ class TableWidget(QTableView):
 		self.setModel(self.data_model)
 		self.model().layoutChanged.emit()
 		self.data_updated.emit(self.model())
-		
+	
+	# def set_cell_style_at(self, row_index, column_index, **argv):
+	# 	stylesheet = "TableWidget::item, FreezeView::item {%s}"
+	# 	styles     = ""
+	# 	for css_attribute in argv:
+	# 		style += ("%s : %s; " % (css_attribute, argv[css_attribute]))
+
+	# 	stylesheet % styles
+
 
 	def showEvent(self, event):
 		QTableView.showEvent(self, event)
@@ -308,6 +318,7 @@ class TableWidget(QTableView):
 	def setVerticalScrollMode(self, scroll_mode):
 		QTableView.setVerticalScrollMode(self, scroll_mode)
 		self.vscroll_mode_changed.emit(scroll_mode)
+
 
 class DebugWindow(QMainWindow):
 	def __init__(self, parent=None):
@@ -426,7 +437,6 @@ def Debugger():
 	f.open(QFile.ReadOnly | QFile.Text)
 	ts = QTextStream(f)
 	stylesheet = ts.readAll()
-	print(stylesheet)
 	app.setStyleSheet(stylesheet)
 	form.show()
 	app.exec_()

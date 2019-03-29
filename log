@@ -44,11 +44,14 @@
 	
 	multiple row/col resize to fit content
 
-# 20190327
+# 20190328
 	Cursor tracer currently cannot manage cross view selection correctly if parent widget is not at neutral scroll position
 
 	sorting and filtering on columns is currently not avaliable
 
-	data conditional theming is currently not avaliable
+	# data conditional theming is currently not avaliable(fixed)
+	# 	|> see 20190329
 
-	
+# 20190329
+	implemnting data conditional themeing by changing QAbstractTableModel to QStandardItemModel with theming deligates
+	super buggy, though basic row col add/removing still works.
