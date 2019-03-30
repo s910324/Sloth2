@@ -5,6 +5,7 @@ from PyQt5.QtWidgets import *
 from PyQt5.QtCore    import *
 from PyQt5.QtGui     import *
 from HeaderItem      import HHeaderItem, VHeaderItem
+import random as r
 
 class DataModel(QAbstractTableModel):
 	def __init__(self, parent = None, *args):
@@ -76,12 +77,12 @@ class DataItemModel(QStandardItemModel):
 	def load_data(self, data):
 		self.data_cached = data
 		for index, data_row in enumerate(self.data_cached):
-			self.appendRow([QStandardItem(str(index)) for data in data_row])
+			self.appendRow([QStandardItem(str(data)) for data in data_row])
 		self.parent.setItemDelegate(DataThemeDelegate(self.parent))
 		self.update_formatting()
 
 	def update_formatting(self):
- 		self.parent.setStyleSheet(''.join(self.format_theme))
+		self.parent.setStyleSheet(''.join(self.format_theme))
 
 	def rowCount(self, parent):
 		return len(self.data_cached)
@@ -89,26 +90,27 @@ class DataItemModel(QStandardItemModel):
 	def columnCount(self, parent):
 		return len(self.data_cached[0]) if self.data_cached else 0
  
-	def get_value(self, index):
-		return self.data_cached[index.row()][index.column()]
+	# def get_value(self, index):
+	# 	return self.data_cached[index.row()][index.column()]
  
-	def data(self, index, role):
-		if not index.isValid():
-			return None
-		value = self.get_value(index)
-		if role == Qt.DisplayRole or role == Qt.EditRole:
-			return value
-		elif role == Qt.TextAlignmentRole:
-				return Qt.AlignCenter
-		return None
+	# def data(self, index, role):
+	# 	if not index.isValid():
+	# 		return None
+	# 	value = self.get_value(index)
+	# 	if role == Qt.DisplayRole or role == Qt.EditRole:
+	# 		return value
+	# 	elif role == Qt.TextAlignmentRole:
+	# 			return Qt.AlignCenter
+	# 	return None
  
-	def setData(self, index, value, role): 
-		if index.isValid() and role == Qt.EditRole:
-			self.data_cached[index.row()][index.column()] = value
-			self.dataChanged.emit(index, index)
-			return True
-		else:
-			return False
+	# def setData(self, index, value, role): 
+	# 	print ("asdasd")
+	# 	if index.isValid() and role == Qt.EditRole:
+	# 		self.data_cached[index.row()][index.column()] = value
+	# 		self.dataChanged.emit(index, index)
+	# 		return True
+	# 	else:
+	# 		return False
 
 	def headerData(self, section, orientation, role):
 		if orientation == Qt.Horizontal and role == Qt.DisplayRole:
@@ -127,8 +129,9 @@ class DataItemModel(QStandardItemModel):
 		return type(self.parent.itemDelegate(index).cell)#.styleSheet()
 
 	def set_cell_style(self):#, index , style):
-		self.parent.itemDelegate(self.index(0, 0)).cell.set()
-		self.parent.itemDelegate(self.index(1, 0)).cell.set()
+		print(self.parent.model().item(0, 0).text())
+		self.parent.model().item(0, 0).setText("123123123")
+		self.parent.model().item(0, 1).setBackground(QColor("FF0000"))
 
 
 class DataThemeDelegate(QStyledItemDelegate):
@@ -138,13 +141,18 @@ class DataThemeDelegate(QStyledItemDelegate):
 
 	def paint(self, painter, option, index):
 		item = index.model().itemFromIndex(index)
-		self.cell.set_style('defaule' if int(item.text()) % 2 == 0 else 'red' )
+		i = r.random()
+		self.cell.set_style('defaule' if i > 0.5 else 'red' )
 		self.initStyleOption(option, index)
 		style = option.widget.style() if option.widget else QApplication.style()
 		style.unpolish(self.cell)
 		style.polish(self.cell)
-		style.drawControl(QStyle.CE_ItemViewItem, option, painter, self.cell)
+		style.drawControl(QStyle.CE_ItemViewItem , option, painter, self.cell)
 
 class Cell(QWidget):
+	def __init__(self, *args):
+		super(Cell, self).__init__(*args)
+
+
 	def set_style(self, style_group  = 'default'):
 		self.setProperty('style_group', style_group)

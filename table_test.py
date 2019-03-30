@@ -100,8 +100,8 @@ class TableWidget(QTableView):
 
 
 	def selection_check(self):
-		print(self.data_model.get_cell_style((self.model().index(1, 1))))
-		# self.data_model.set_cell_style()
+
+		self.data_model.set_cell_style()
 		# self.data_model.update_formatting()
 		# print(self.viewport().height())
 		# print(self.rowAt(0))
