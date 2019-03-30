@@ -71,13 +71,18 @@ class DataItemModel(QStandardItemModel):
 		self.parent = parent
 		self.data_cached             = []
 		self.horizontal_header_items = {}
+		self.format_theme            = ['Cell[style_group=red]::item {background-color: red;font-style: italic;}', 'Cell[style_group=green]::item {background-color: green;}']
 
 	def load_data(self, data):
 		self.data_cached = data
-		for data_row in self.data_cached:
-			self.appendRow([QStandardItem(str(data)+"nn") for data in data_row])
+		for index, data_row in enumerate(self.data_cached):
+			self.appendRow([QStandardItem(str(index)) for data in data_row])
 		self.parent.setItemDelegate(DataThemeDelegate(self.parent))
- 
+		self.update_formatting()
+
+	def update_formatting(self):
+ 		self.parent.setStyleSheet(''.join(self.format_theme))
+
 	def rowCount(self, parent):
 		return len(self.data_cached)
  
@@ -101,7 +106,6 @@ class DataItemModel(QStandardItemModel):
 		if index.isValid() and role == Qt.EditRole:
 			self.data_cached[index.row()][index.column()] = value
 			self.dataChanged.emit(index, index)
-			print("setted")
 			return True
 		else:
 			return False
@@ -119,7 +123,12 @@ class DataItemModel(QStandardItemModel):
 			return ('%d' % (section + 1)).zfill(len(str(len(self.data_cached))))
 		return None
 
+	def get_cell_style(self, index):
+		return type(self.parent.itemDelegate(index).cell)#.styleSheet()
 
+	def set_cell_style(self):#, index , style):
+		self.parent.itemDelegate(self.index(0, 0)).cell.set()
+		self.parent.itemDelegate(self.index(1, 0)).cell.set()
 
 
 class DataThemeDelegate(QStyledItemDelegate):
@@ -129,7 +138,7 @@ class DataThemeDelegate(QStyledItemDelegate):
 
 	def paint(self, painter, option, index):
 		item = index.model().itemFromIndex(index)
-		self.cell.set_style("na")
+		self.cell.set_style('defaule' if int(item.text()) % 2 == 0 else 'red' )
 		self.initStyleOption(option, index)
 		style = option.widget.style() if option.widget else QApplication.style()
 		style.unpolish(self.cell)
@@ -137,5 +146,5 @@ class DataThemeDelegate(QStyledItemDelegate):
 		style.drawControl(QStyle.CE_ItemViewItem, option, painter, self.cell)
 
 class Cell(QWidget):
-	def set_style(self, style_group  = 'Defaule'):
+	def set_style(self, style_group  = 'default'):
 		self.setProperty('style_group', style_group)

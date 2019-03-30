@@ -61,6 +61,3 @@ QHeaderView::section:checked:vertical{
 	border-right: 1px solid #22ff22;
 }
 
-Cell[style_group=na]::item { background-color: gray; }
-Cell[style_group=one]::item { background-color: green; font-style: italic }
-Cell[style_group=two]::item { font-weight: bold }

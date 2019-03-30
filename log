@@ -55,3 +55,6 @@
 # 20190329
 	implemnting data conditional themeing by changing QAbstractTableModel to QStandardItemModel with theming deligates
 	super buggy, though basic row col add/removing still works.
+	references: 
+		https://stackoverflow.com/questions/52759386/pyqt-stylesheet-based-styling-of-tableview-cells-based-on-content
+		https://stackoverflow.com/questions/16394459/in-pyqt-pyside-how-to-set-different-color-in-on-cell-of-the-tableview
