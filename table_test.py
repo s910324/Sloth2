@@ -100,8 +100,13 @@ class TableWidget(QTableView):
 
 
 	def selection_check(self):
+	
+		c = self.cell_item_in_selected_ranges(self.selectionModel().selection())
+		for cell in reduce(lambda i, j : i + j, c):
 
-		self.data_model.set_cell_style()
+			print(cell.setBackground(QColor("#FF0000")))
+
+		# self.data_model.set_cell_style()
 		# self.data_model.update_formatting()
 		# print(self.viewport().height())
 		# print(self.rowAt(0))
@@ -123,6 +128,12 @@ class TableWidget(QTableView):
 		clip_board_text = ('\n'.join(['\t'.join(map(str, row_data)) for row_data in selected_data]))
 		QApplication.clipboard().setText(clip_board_text)
 		return clip_board_text
+
+	def cell_item_in_selected_ranges(self, selection):
+		assert isinstance(selection, QItemSelection)
+		selected_cell   = []		
+		if selection:
+			return [reduce(lambda i, j : i + j, self.cell_item_in_selected_range(selected_range)) for selected_range in selection]
 
 	def data_in_selected_ranges(self, selection):
 		assert isinstance(selection, QItemSelection)
@@ -148,10 +159,22 @@ class TableWidget(QTableView):
 				print("bad selection") #todo error handling
 		return selected_data
 
+	def cell_item_in_selected_range(self, selected_range):
+		assert isinstance(selected_range, QItemSelectionRange)
+		return self.cell_item_in_rect(selected_range.top(), selected_range.bottom(), selected_range.left(), selected_range.right())
 
 	def data_in_selected_range(self, selected_range):
 		assert isinstance(selected_range, QItemSelectionRange)
 		return self.data_in_rect(selected_range.top(), selected_range.bottom(), selected_range.left(), selected_range.right())
+
+
+	def cell_item_in_rect(self, top, bottom, left, right):
+		assert all([ isinstance(dimension, int) for dimension in [top, bottom, left, right]])
+		selected_cell = []
+		for row_index in range(top, bottom+1):
+			row_segment_cell = [self.data_model.item(row_index, column_index) for column_index in range(left,right+1)]
+			selected_cell.append(row_segment_cell)
+		return selected_cell
 
 	def data_in_rect(self, top, bottom, left, right):
 		assert all([ isinstance(dimension, int) for dimension in [top, bottom, left, right]])
@@ -268,13 +291,11 @@ class TableWidget(QTableView):
 		self.model().layoutChanged.emit()
 		self.data_updated.emit(self.model())
 	
-	# def set_cell_style_at(self, row_index, column_index, **argv):
-	# 	stylesheet = "TableWidget::item, FreezeView::item {%s}"
-	# 	styles     = ""
-	# 	for css_attribute in argv:
-	# 		style += ("%s : %s; " % (css_attribute, argv[css_attribute]))
+	def set_cell_style_at(self, row_index, column_index, **argv):
+		for css_attribute in argv:
+			style += ("%s : %s; " % (css_attribute, argv[css_attribute]))
 
-	# 	stylesheet % styles
+		stylesheet % styles
 
 
 	def showEvent(self, event):
@@ -423,7 +444,7 @@ class DebugWindow(QMainWindow):
 				row_data.append("cell %s, %s" % (str(r).zfill(2), str(c).zfill(2)))
 			data.append(row_data)
 
-					
+		data[0][0] = "2.1234355"
 
 		self.table.set_data(data)
 

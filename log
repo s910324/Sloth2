@@ -58,3 +58,9 @@
 	references: 
 		https://stackoverflow.com/questions/52759386/pyqt-stylesheet-based-styling-of-tableview-cells-based-on-content
 		https://stackoverflow.com/questions/16394459/in-pyqt-pyside-how-to-set-different-color-in-on-cell-of-the-tableview
+
+# 20190331	
+	add new data item to solve data parsing issue, add data type judgement and will show data type using little triangle
+	at the corner of the cell, currently this function not supported in freeze view.
+	reference:
+		https://stackoverflow.com/questions/19308940/how-to-draw-a-triangle-in-qtableview-cell-corner-to-show-the-model-data-can-be-s

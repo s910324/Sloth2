@@ -77,7 +77,7 @@ class DataItemModel(QStandardItemModel):
 	def load_data(self, data):
 		self.data_cached = data
 		for index, data_row in enumerate(self.data_cached):
-			self.appendRow([QStandardItem(str(data)) for data in data_row])
+			self.appendRow([DataItem(data) for data in data_row])
 		self.parent.setItemDelegate(DataThemeDelegate(self.parent))
 		self.update_formatting()
 
@@ -128,10 +128,10 @@ class DataItemModel(QStandardItemModel):
 	def get_cell_style(self, index):
 		return type(self.parent.itemDelegate(index).cell)#.styleSheet()
 
-	def set_cell_style(self):#, index , style):
+	def set_cell_style(self, index , style):
 		print(self.parent.model().item(0, 0).text())
 		self.parent.model().item(0, 0).setText("123123123")
-		self.parent.model().item(0, 1).setBackground(QColor("FF0000"))
+		self.parent.model().item(0, 1).setBackground(QColor("#FF0000"))
 
 
 class DataThemeDelegate(QStyledItemDelegate):
@@ -141,13 +141,28 @@ class DataThemeDelegate(QStyledItemDelegate):
 
 	def paint(self, painter, option, index):
 		item = index.model().itemFromIndex(index)
-		i = r.random()
-		self.cell.set_style('defaule' if i > 0.5 else 'red' )
+		# i = r.random()
+		# self.cell.set_style('defaule' if i > 0.5 else 'red' )
 		self.initStyleOption(option, index)
 		style = option.widget.style() if option.widget else QApplication.style()
 		style.unpolish(self.cell)
 		style.polish(self.cell)
 		style.drawControl(QStyle.CE_ItemViewItem , option, painter, self.cell)
+
+
+		super(DataThemeDelegate, self).paint(painter, option, index)
+
+		polygonTriangle = QPolygon(3)
+		polygonTriangle.setPoint(0, QPoint(option.rect.x()+5, option.rect.y()))
+		polygonTriangle.setPoint(1, QPoint(option.rect.x(), option.rect.y()))
+		polygonTriangle.setPoint(2, QPoint(option.rect.x(), option.rect.y()+5))
+
+		painter.save()
+		painter.setRenderHint(painter.Antialiasing)
+		painter.setBrush(QBrush(QColor(Qt.darkGreen))) 
+		painter.setPen(QPen(QColor(Qt.darkGreen)))
+		painter.drawPolygon(polygonTriangle)
+		painter.restore()
 
 class Cell(QWidget):
 	def __init__(self, *args):
@@ -156,3 +171,58 @@ class Cell(QWidget):
 
 	def set_style(self, style_group  = 'default'):
 		self.setProperty('style_group', style_group)
+
+class DataItem(QStandardItem):
+	def __init__(self, data = None):
+		QStandardItem.__init__(self)
+		self.data   = None
+		self.format = ""
+		self.set_data(data)
+		print (self.data, self.format)
+
+	def to_float(self):
+		try:
+			self.data   = float(self.data)
+			self.format = "%.2f"
+			return True
+		except ValueError:
+			return False
+
+	def to_int(self):
+		try:
+			self.data = int(self.data)
+			self.format = "%d"
+			return True
+		except ValueError:
+			return False
+
+	def to_str(self):
+		try:
+			self.data = str(self.data)
+			self.format = "%s"
+			return True
+		except ValueError:
+			return False
+
+	def data_type(self):
+		return type(self.data)
+
+	def set_data(self, data):
+
+		self.data = data
+		if self.to_float():
+			self.setText(self.text())
+			return True
+		if self.to_int():
+			self.setText(self.text())
+			return True
+		if self.to_str():
+			self.setText(self.text())
+			return True			
+		return False
+
+
+	def text(self):
+		return (self.format % self.data)
+
+
