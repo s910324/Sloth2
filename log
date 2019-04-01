@@ -64,3 +64,12 @@
 	at the corner of the cell, currently this function not supported in freeze view.
 	reference:
 		https://stackoverflow.com/questions/19308940/how-to-draw-a-triangle-in-qtableview-cell-corner-to-show-the-model-data-can-be-s
+
+	pandas dataframe:
+	https://stackoverflow.com/questions/44603119/how-to-display-a-pandas-data-frame-with-pyqt5	
+	https://github.com/sterry24/dfViewer
+	https://github.com/datalyze-solutions/pandas-qt
+
+
+#20190401 
+	row column operation currently broken after adding themeing function

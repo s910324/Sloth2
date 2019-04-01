@@ -104,9 +104,12 @@ class TableWidget(QTableView):
 		c = self.cell_item_in_selected_ranges(self.selectionModel().selection())
 		for cell in reduce(lambda i, j : i + j, c):
 
-			print(cell.setBackground(QColor("#FF0000")))
+			cell.style.set_background_color("#323232")
+			cell.style.set_text_size(6)
+			cell.style.set_text_color("#fdfdfd")
 
-		# self.data_model.set_cell_style()
+			# print(cell.m)
+		# self.data_model.set_cell_style(0, 0)
 		# self.data_model.update_formatting()
 		# print(self.viewport().height())
 		# print(self.rowAt(0))

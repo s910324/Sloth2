@@ -129,9 +129,10 @@ class DataItemModel(QStandardItemModel):
 		return type(self.parent.itemDelegate(index).cell)#.styleSheet()
 
 	def set_cell_style(self, index , style):
-		print(self.parent.model().item(0, 0).text())
-		self.parent.model().item(0, 0).setText("123123123")
+		# print(self.parent.model().item(0, 0).text())
+		# self.parent.model().item(0, 0).setText("123123123")
 		self.parent.model().item(0, 1).setBackground(QColor("#FF0000"))
+		# self.parent.model().item(0, 1).setm()
 
 
 class DataThemeDelegate(QStyledItemDelegate):
@@ -139,10 +140,19 @@ class DataThemeDelegate(QStyledItemDelegate):
 		super(DataThemeDelegate, self).__init__(*args)
 		self.cell = Cell(self.parent())
 
+
 	def paint(self, painter, option, index):
 		item = index.model().itemFromIndex(index)
+
+		self.draw_cell_background(painter, option, item.style.background_color())
+		self.draw_cell_type_hint( painter, option, item)
+		
+
 		# i = r.random()
 		# self.cell.set_style('defaule' if i > 0.5 else 'red' )
+
+
+
 		self.initStyleOption(option, index)
 		style = option.widget.style() if option.widget else QApplication.style()
 		style.unpolish(self.cell)
@@ -150,35 +160,68 @@ class DataThemeDelegate(QStyledItemDelegate):
 		style.drawControl(QStyle.CE_ItemViewItem , option, painter, self.cell)
 
 
-		super(DataThemeDelegate, self).paint(painter, option, index)
 
-		polygonTriangle = QPolygon(3)
-		polygonTriangle.setPoint(0, QPoint(option.rect.x()+5, option.rect.y()))
-		polygonTriangle.setPoint(1, QPoint(option.rect.x(), option.rect.y()))
-		polygonTriangle.setPoint(2, QPoint(option.rect.x(), option.rect.y()+5))
-
+	def draw_cell_background(self, painter, option, background_color):
+		background = QPolygon(4)
+		x, y, w, h = option.rect.x(), option.rect.y(), option.rect.width(), option.rect.height()
+		background.setPoint(0, QPoint(x+w, y))
+		background.setPoint(1, QPoint(x,   y))
+		background.setPoint(2, QPoint(x,   y+h))
+		background.setPoint(3, QPoint(x+w, y+h))
+		
 		painter.save()
 		painter.setRenderHint(painter.Antialiasing)
-		painter.setBrush(QBrush(QColor(Qt.darkGreen))) 
-		painter.setPen(QPen(QColor(Qt.darkGreen)))
-		painter.drawPolygon(polygonTriangle)
+		painter.setBrush(QBrush(QColor(background_color))) 
+		painter.setPen(Qt.NoPen)
+		painter.drawPolygon(background)
 		painter.restore()
 
-class Cell(QWidget):
-	def __init__(self, *args):
-		super(Cell, self).__init__(*args)
+	def draw_cell_type_hint(self, painter, option, data_type):
+		if data_type.data_type()== str:
+			triangle = QPolygon(3)
+			triangle.setPoint(0, QPoint(option.rect.x()+4, option.rect.y()))
+			triangle.setPoint(1, QPoint(option.rect.x(),   option.rect.y()))
+			triangle.setPoint(2, QPoint(option.rect.x(),   option.rect.y()+4))
+			painter.save()
+			painter.setRenderHint(painter.Antialiasing)
+			painter.setBrush(QBrush(QColor("#00cc66"))) 
+			painter.setPen(Qt.NoPen)
+			painter.drawPolygon(triangle)
+			painter.restore()
 
+class Cell(QWidget):
+	def __init__(self, parent):
+		super(Cell, self).__init__(parent)
 
 	def set_style(self, style_group  = 'default'):
+		print( self)
 		self.setProperty('style_group', style_group)
+
+
+
 
 class DataItem(QStandardItem):
 	def __init__(self, data = None):
 		QStandardItem.__init__(self)
+		self.style = StyleObject()
 		self.data   = None
 		self.format = ""
 		self.set_data(data)
-		print (self.data, self.format)
+		# print (self.font())
+		self.connect_style()
+
+	def connect_style(self):
+		self.style.text_size_changed.connect( lambda x : self._set_text_size(x))
+		self.style.text_color_changed.connect(lambda x : self._set_text_color(x))
+
+	def _set_text_size(self, size):
+		font = self.font()
+		font.setPointSize(size)
+		self.setFont(font)
+
+	def _set_text_color(self, font_color):
+		self.setForeground(QColor(font_color))
+
 
 	def to_float(self):
 		try:
@@ -225,4 +268,37 @@ class DataItem(QStandardItem):
 	def text(self):
 		return (self.format % self.data)
 
+class StyleObject(QObject):
+	text_size_changed  = pyqtSignal(int)
+	text_color_changed = pyqtSignal(str)
+	
+	def __init__(self):
+		super(StyleObject, self).__init__()
+		self._background_color =  "#FFFFFF"
+		self._text_size        =  8
+		self._text_color       =  "#000000"
+		self._text_h_align     =  Qt.AlignRight
+		self._text_v_align     =  Qt.AlignHCenter
+		self._text_font        =  "Inconsolata"
+		self._text_bold        =  False
+		self._text_italic      =  False
 
+	def set_background_color(self, color):
+		self._background_color = color
+
+	def set_text_size(self, size):
+		self._text_size        = size
+		self.text_size_changed.emit(size)
+
+	def set_text_color(self, color):
+		self._text_color       = color
+		self.text_color_changed.emit(color)
+
+	def background_color(self):
+		return self._background_color
+
+	def text_size(self):
+		return self._text_size
+
+	def text_color(self):
+		return self._text_color

@@ -6,21 +6,22 @@ TableWidget, FreezeView {
 	gridline-color: #C8C8C8;
 }
 
-TableWidget::item, FreezeView::item {
+TableWidget::item, FreezeView::item{
 	background-color: #FFFFFF;
 }
 
 
 
-TableWidget::item:selected:active,  FreezeView::item:selected:active  {
-	background-color: #E8E8E8;
+TableWidget::item:selected:active,  FreezeView::item:selected:active, Cell::item:selected:active {
+	background-color: rgba(100, 100, 100, .2);
 	color: #000000;
 }
 
-TableWidget::item:selected:!active, FreezeView::item:selected:!active {
-	background-color: #E8E8E8;
+TableWidget::item:selected:!active, FreezeView::item:selected:!active, Cell::item:selected:!active {
+	background-color: rgba(100, 100, 100, .2);
 	color: #000000;
 }
+
 
 
 
@@ -55,9 +56,9 @@ QHeaderView::section:vertical{
 }
 
 QHeaderView::section:checked:horizontal{
-	border-bottom: 1px solid #22ff22;
+	border-bottom: 1px solid #ff3399;
 }
 QHeaderView::section:checked:vertical{
-	border-right: 1px solid #22ff22;
+	border-right: 1px solid #ff3399;
 }
 
