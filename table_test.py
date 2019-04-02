@@ -86,7 +86,7 @@ class TableWidget(QTableView):
 	def set_data(self, data):
 		if data:
 			# self.data_model.data_cached = data
-			self.data_model.load_data(data)
+			self.data_model.set_data(data)
 			self.update_data_model()
 	
 	def froze_view_at_selection(self):
@@ -258,6 +258,11 @@ class TableWidget(QTableView):
 			self.update_data_model()
 
 	def insert_column_at(self, column_index, column_counts = 1):
+			self.data_model.add_column_at(column_index)
+			self.column_inserted.emit(column_index)
+			self.update_data_model()
+
+	def _insert_column_at(self, column_index, column_counts = 1):
 		for new_columns in range(column_counts):
 			if self.data_model.data_cached:
 				_ =[ each_row.insert(column_index, "") for each_row in self.data_model.data_cached]

@@ -73,3 +73,6 @@
 
 #20190401 
 	row column operation currently broken after adding themeing function
+
+#20190402
+	fixind and patching row/col operation using pandas(ongoing)

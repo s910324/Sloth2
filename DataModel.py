@@ -5,6 +5,7 @@ from PyQt5.QtWidgets import *
 from PyQt5.QtCore    import *
 from PyQt5.QtGui     import *
 from HeaderItem      import HHeaderItem, VHeaderItem
+import pandas 
 import random as r
 
 class DataModel(QAbstractTableModel):
@@ -67,50 +68,89 @@ class DataModel(QAbstractTableModel):
  
 
 class DataItemModel(QStandardItemModel):
+	data_changed = pyqtSignal()
 	def __init__(self, parent = None, *args):
 		QStandardItemModel.__init__(self, parent, *args)
 		self.parent = parent
 		self.data_cached             = []
+		self._data_frame             = pandas.DataFrame()
 		self.horizontal_header_items = {}
 		self.format_theme            = ['Cell[style_group=red]::item {background-color: red;font-style: italic;}', 'Cell[style_group=green]::item {background-color: green;}']
 
-	def load_data(self, data):
-		self.data_cached = data
-		for index, data_row in enumerate(self.data_cached):
-			self.appendRow([DataItem(data) for data in data_row])
+	def set_data(self, data, copy_data = False):
+		data_frame       = data if isinstance(data, pandas.core.frame.DataFrame) else pandas.DataFrame(data)
+		self._data_frame = data_frame.copy() if copy_data else data_frame
+		self.data_changed.emit()
+
+		for row_index in range(len(self._data_frame)):
+			print(self._data_frame.iloc[row_index])
+			self.appendRow([DataItem(data) for data in self._data_frame.iloc[row_index]])
+
 		self.parent.setItemDelegate(DataThemeDelegate(self.parent))
-		self.update_formatting()
+
+
+	def add_column_at(self, column_index, dtype=str, defaultValue=None):
+		new_column = pandas.Series([defaultValue]*self.rowCount(), index=self._data_frame.index, dtype=dtype)
+		self.beginInsertColumns(QModelIndex(), column_index - 1, column_index - 1)
+		self._data_frame.insert(column_index, max(self._data_frame)+1, new_column, allow_duplicates=False)
+		self.endInsertColumns()
+
+	def addDataFrameRows(self, count=1):
+		"""
+
+		Adds rows to the dataframe.
+
+		:param count: (int)
+			The number of rows to add to the dataframe.
+		:return: (bool)
+			True on success, False on failure.
+
+		"""
+		# don't allow any gaps in the data rows.
+		# and always append at the end
+
+		if not self.editable:
+			return False
+
+		position = self.rowCount()
+
+		if count < 1:
+			return False
+
+		if len(self.dataFrame().columns) == 0:
+			# log an error message or warning
+			return False
+
+		# Note: This function emits the rowsAboutToBeInserted() signal which
+		# connected views (or proxies) must handle before the data is
+		# inserted. Otherwise, the views may end up in an invalid state.
+		self.beginInsertRows(QtCore.QModelIndex(), position, position + count - 1)
+
+		defaultValues = []
+		for dtype in self._dataFrame.dtypes:
+			if dtype.type == numpy.dtype('<M8[ns]'):
+				val = pandas.Timestamp('')
+			elif dtype.type == numpy.dtype(object):
+				val = ''
+			else:
+				val = dtype.type()
+			defaultValues.append(val)
+
+		for i in range(count):
+			self._dataFrame.loc[position + i] = defaultValues
+		self._dataFrame.reset_index()
+		self.endInsertRows()
+		return True
 
 	def update_formatting(self):
 		self.parent.setStyleSheet(''.join(self.format_theme))
 
-	def rowCount(self, parent):
-		return len(self.data_cached)
- 
-	def columnCount(self, parent):
-		return len(self.data_cached[0]) if self.data_cached else 0
- 
-	# def get_value(self, index):
-	# 	return self.data_cached[index.row()][index.column()]
- 
-	# def data(self, index, role):
-	# 	if not index.isValid():
-	# 		return None
-	# 	value = self.get_value(index)
-	# 	if role == Qt.DisplayRole or role == Qt.EditRole:
-	# 		return value
-	# 	elif role == Qt.TextAlignmentRole:
-	# 			return Qt.AlignCenter
-	# 	return None
- 
-	# def setData(self, index, value, role): 
-	# 	print ("asdasd")
-	# 	if index.isValid() and role == Qt.EditRole:
-	# 		self.data_cached[index.row()][index.column()] = value
-	# 		self.dataChanged.emit(index, index)
-	# 		return True
-	# 	else:
-	# 		return False
+	def rowCount(self, parent=None):
+		return  len(self._data_frame)
+
+	def columnCount(self, parent=None):
+		return len(self._data_frame.columns)
+
 
 	def headerData(self, section, orientation, role):
 		if orientation == Qt.Horizontal and role == Qt.DisplayRole:
@@ -261,7 +301,7 @@ class DataItem(QStandardItem):
 			return True
 		if self.to_str():
 			self.setText(self.text())
-			return True			
+			return True         
 		return False
 
 

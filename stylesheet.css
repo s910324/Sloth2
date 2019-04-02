@@ -56,9 +56,9 @@ QHeaderView::section:vertical{
 }
 
 QHeaderView::section:checked:horizontal{
-	border-bottom: 1px solid #ff3399;
+	border-bottom: 1px solid #00cc66;
 }
 QHeaderView::section:checked:vertical{
-	border-right: 1px solid #ff3399;
+	border-right: 1px solid #00cc66;
 }
 
