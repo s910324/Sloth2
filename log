@@ -76,3 +76,4 @@
 
 #20190402
 	fixind and patching row/col operation using pandas(ongoing)
+		|> partilly patched add column, key is to clear before refreshing datamodel

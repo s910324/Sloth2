@@ -80,20 +80,25 @@ class DataItemModel(QStandardItemModel):
 	def set_data(self, data, copy_data = False):
 		data_frame       = data if isinstance(data, pandas.core.frame.DataFrame) else pandas.DataFrame(data)
 		self._data_frame = data_frame.copy() if copy_data else data_frame
-		self.data_changed.emit()
 
+		self.clear()
 		for row_index in range(len(self._data_frame)):
-			print(self._data_frame.iloc[row_index])
+			# print (self._data_frame.iloc[row_index])
 			self.appendRow([DataItem(data) for data in self._data_frame.iloc[row_index]])
-
+		self.data_changed.emit()
+		self.layoutChanged.emit()
 		self.parent.setItemDelegate(DataThemeDelegate(self.parent))
 
 
-	def add_column_at(self, column_index, dtype=str, defaultValue=None):
-		new_column = pandas.Series([defaultValue]*self.rowCount(), index=self._data_frame.index, dtype=dtype)
-		self.beginInsertColumns(QModelIndex(), column_index - 1, column_index - 1)
-		self._data_frame.insert(column_index, max(self._data_frame)+1, new_column, allow_duplicates=False)
-		self.endInsertColumns()
+	def add_column_at(self, column_index, dtype=str, defaultValue=0):
+		# new_column = pandas.Series([defaultValue]*self.rowCount(), index=self._data_frame.index, dtype=dtype)
+		new_column = [defaultValue for each in range(len(self._data_frame))]
+
+		# self.beginInsertColumns(QModelIndex(), column_index - 1, column_index - 1)
+		self._data_frame.insert(0, max(self._data_frame)+1, new_column, allow_duplicates=False)
+		# self.endInsertColumns()
+		print (self._data_frame)
+		self.set_data(self._data_frame)
 
 	def addDataFrameRows(self, count=1):
 		"""

@@ -232,8 +232,9 @@ class TableWidget(QTableView):
 
 	def insert_column_before_selection(self):
 		if len(self.selected_columns())==1:
-			self.insert_column_at(self.selected_columns()[0])
-			self.selectColumn(self.selected_columns()[0]+1)
+			selected = self.selected_columns()[0]
+			self.insert_column_at(selected)
+			self.selectColumn(selected+1)
 
 	def insert_column_after_selection(self):
 		if len(self.selected_columns())==1:
