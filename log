@@ -77,3 +77,12 @@
 #20190402
 	fixind and patching row/col operation using pandas(ongoing)
 		|> partilly patched add column, key is to clear before refreshing datamodel
+
+
+
+#20190408
+	row column inserting and wipe cell function patched, wipe cell cfunction is extreme slow though.
+	data_item to data model now can bind successfully.
+	freeze view currently is still not function properly
+
+

@@ -6,6 +6,7 @@ from PyQt5.QtCore    import *
 from PyQt5.QtGui     import *
 from HeaderItem      import HHeaderItem, VHeaderItem
 import pandas 
+import numpy
 import random as r
 
 class DataModel(QAbstractTableModel):
@@ -76,6 +77,8 @@ class DataItemModel(QStandardItemModel):
 		self._data_frame             = pandas.DataFrame()
 		self.horizontal_header_items = {}
 		self.format_theme            = ['Cell[style_group=red]::item {background-color: red;font-style: italic;}', 'Cell[style_group=green]::item {background-color: green;}']
+		# self.dataChanged.connect( lambda x, y: print( "DM: ", self.get_cell_data(x.row(), x.column()) ) )
+		self.dataChanged.connect( lambda x, y: self.update_cell_data(x.row(), x.column()) )
 
 	def set_data(self, data, copy_data = False):
 		data_frame       = data if isinstance(data, pandas.core.frame.DataFrame) else pandas.DataFrame(data)
@@ -83,22 +86,45 @@ class DataItemModel(QStandardItemModel):
 
 		self.clear()
 		for row_index in range(len(self._data_frame)):
-			# print (self._data_frame.iloc[row_index])
 			self.appendRow([DataItem(data) for data in self._data_frame.iloc[row_index]])
 		self.data_changed.emit()
 		self.layoutChanged.emit()
 		self.parent.setItemDelegate(DataThemeDelegate(self.parent))
 
+	def get_cell_data(self, row_index, column_index):
+		return self._data_frame.iloc[row_index, column_index]
 
-	def add_column_at(self, column_index, dtype=str, defaultValue=0):
-		# new_column = pandas.Series([defaultValue]*self.rowCount(), index=self._data_frame.index, dtype=dtype)
-		new_column = [defaultValue for each in range(len(self._data_frame))]
+	def set_cell_data(self, row_index, column_index, data):
+		self._data_frame.iloc[row_index, column_index] = data
 
-		# self.beginInsertColumns(QModelIndex(), column_index - 1, column_index - 1)
-		self._data_frame.insert(0, max(self._data_frame)+1, new_column, allow_duplicates=False)
-		# self.endInsertColumns()
-		print (self._data_frame)
+	def update_cell_data(self, row_index, column_index):
+		data_from_data_item = self.item(row_index, column_index).data()
+		self.set_cell_data(row_index, column_index, data_from_data_item)
+
+	def clear_cell_at(self, row_index, column_index):
+		self.item(row_index, column_index).setData(numpy.str(""))
+
+	def clear_row_at(self, row_index):
+		_ =[ self.clear_cell_at(row_index, column_index) for column_index in range(self.columnCount())]
+
+	def clear_column_at(self, column_index):
+		_ =[ self.clear_cell_at(row_index, column_index) for row_index in range(self.rowCount())]
+
+	def insert_column_at(self, column_index, dtype=str, default_value=""):
+		new_column       = pandas.DataFrame([ default_value for row_index in range(self.rowCount())])
+		left_half        = self._data_frame.iloc[:, :column_index]
+		right_half       = self._data_frame.iloc[:, column_index:]
+		self._data_frame = pandas.concat([left_half, new_column, right_half], axis = 1, ignore_index=True)
 		self.set_data(self._data_frame)
+
+	def insert_row_at(self, row_index, dtype=str, default_value=""):
+		new_row          = pandas.DataFrame([[default_value for column_index in range(self.columnCount())]])
+		upper_half       = self._data_frame.iloc[:row_index, ]
+		lower_half       = self._data_frame.iloc[row_index:, ]
+		self._data_frame = pandas.concat([upper_half, new_row, lower_half], axis = 0, ignore_index=True)
+		self.set_data(self._data_frame)
+
+
 
 	def addDataFrameRows(self, count=1):
 		"""
@@ -246,14 +272,28 @@ class Cell(QWidget):
 
 
 class DataItem(QStandardItem):
+
 	def __init__(self, data = None):
 		QStandardItem.__init__(self)
-		self.style = StyleObject()
-		self.data   = None
+		self.style  = StyleObject()
+		self.role   = Qt.EditRole and  Qt.DisplayRole
 		self.format = ""
-		self.set_data(data)
-		# print (self.font())
+		self.setData(data)
 		self.connect_style()
+
+	def setData(self, data, role = None):
+		if issubclass(type(data), numpy.generic):
+			QStandardItem.setData(self, data, role if role else self.role)
+		else:
+			QStandardItem.setData(self, numpy.str(data), role if role else self.role)
+		self.emitDataChanged()
+
+	def data(self, role = None):
+		return QStandardItem.data(self, role if role else self.role)
+
+
+	def data_type(self):
+		return type(self.data())
 
 	def connect_style(self):
 		self.style.text_size_changed.connect( lambda x : self._set_text_size(x))
@@ -267,47 +307,41 @@ class DataItem(QStandardItem):
 	def _set_text_color(self, font_color):
 		self.setForeground(QColor(font_color))
 
-
-	def to_float(self):
+	def _to_double(self):
 		try:
-			self.data   = float(self.data)
+			value       = numpy.double(self.data())
 			self.format = "%.2f"
+			self.setText(self.format % value)
 			return True
 		except ValueError:
 			return False
 
-	def to_int(self):
+	def _to_float(self):
 		try:
-			self.data = int(self.data)
+			value       = numpy.float(self.data())
+			self.format = "%.2f"
+			self.setText(self.format % value)
+			return True
+		except ValueError:
+			return False
+
+	def _to_int(self):
+		try:
+			value       = numpy.int(self.data())
 			self.format = "%d"
+			self.setText(self.format % value)
 			return True
 		except ValueError:
 			return False
 
-	def to_str(self):
+	def _to_str(self):
 		try:
-			self.data = str(self.data)
+			value       = numpy.str(self.data())
 			self.format = "%s"
+			self.setText(self.format % value)
 			return True
 		except ValueError:
 			return False
-
-	def data_type(self):
-		return type(self.data)
-
-	def set_data(self, data):
-
-		self.data = data
-		if self.to_float():
-			self.setText(self.text())
-			return True
-		if self.to_int():
-			self.setText(self.text())
-			return True
-		if self.to_str():
-			self.setText(self.text())
-			return True         
-		return False
 
 
 	def text(self):

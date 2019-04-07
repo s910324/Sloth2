@@ -34,6 +34,7 @@ class TableWidget(QTableView):
 		self.update_data_model()
 		self.setHorizontalScrollMode(QAbstractItemView.ScrollPerPixel)
 		self.setVerticalScrollMode(  QAbstractItemView.ScrollPerPixel)
+		# self.data_model.dataChanged.connect(self.updateDelegates)
 		
 		
 	def enable_forzen_view(self, row_index, column_index):
@@ -210,12 +211,20 @@ class TableWidget(QTableView):
 		for selected_column_index in self.selected_columns():
 			self.clear_column_at(selected_column_index)
 
+	def clear_column_at(self, column_index):
+		self.data_model.clear_column_at(column_index)
+		self.update_data_model()
+
 	def clear_row_at(self, row_index):
+		self.data_model.clear_cell_at(row_index)
+		self.update_data_model()
+
+	def _clear_row_at(self, row_index):
 		row_data = self.data_model.data_cached[row_index]
 		self.data_model.data_cached[row_index] = [ "" for data in range(len(row_data))]
 		self.update_data_model()
 
-	def clear_column_at(self, column_index):
+	def _clear_column_at(self, column_index):
 		_ =[ each_row_data.__setitem__(column_index, "") for each_row_data in self.data_model.data_cached]
 		self.update_data_model()        
 
@@ -238,18 +247,28 @@ class TableWidget(QTableView):
 
 	def insert_column_after_selection(self):
 		if len(self.selected_columns())==1:
-			self.insert_column_at(self.selected_columns()[0]+1)
+			selected = self.selected_columns()[0]
+			self.insert_column_at(selected+1)
+			self.selectColumn(selected)
 
 	def insert_row_before_selection(self):
 		if len(self.selected_rows())==1:
-			self.insert_row_at(self.selected_rows()[0])
-			self.selectRow(self.selected_rows()[0]+1)
+			selected = self.selected_rows()[0]
+			self.insert_row_at(selected)
+			self.selectRow(selected+1)
 
 	def insert_row_after_selection(self):
 		if len(self.selected_rows())==1:
-			self.insert_row_at(self.selected_rows()[0]+1)       
-		
+			selected = self.selected_rows()[0]
+			self.insert_row_at(selected+1)
+			self.selectRow(selected)
+
 	def insert_row_at(self, row_index, row_counts = 1):
+			self.data_model.insert_row_at(row_index)
+			self.row_inserted.emit(row_index)
+			self.update_data_model()	
+
+	def _insert_row_at(self, row_index, row_counts = 1):
 		for new_rows in range(row_counts):
 			if self.data_model.data_cached:
 				self.data_model.data_cached.insert(row_index, ["" for each_column in range(len(self.data_model.data_cached[0]))])
@@ -259,7 +278,7 @@ class TableWidget(QTableView):
 			self.update_data_model()
 
 	def insert_column_at(self, column_index, column_counts = 1):
-			self.data_model.add_column_at(column_index)
+			self.data_model.insert_column_at(column_index)
 			self.column_inserted.emit(column_index)
 			self.update_data_model()
 
