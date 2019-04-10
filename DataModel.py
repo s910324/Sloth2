@@ -79,6 +79,7 @@ class DataItemModel(QStandardItemModel):
 		self.format_theme            = ['Cell[style_group=red]::item {background-color: red;font-style: italic;}', 'Cell[style_group=green]::item {background-color: green;}']
 		# self.dataChanged.connect( lambda x, y: print( "DM: ", self.get_cell_data(x.row(), x.column()) ) )
 		self.dataChanged.connect( lambda x, y: self.update_cell_data(x.row(), x.column()) )
+		self.data_theme_deligate     = DataThemeDelegate(self.parent)
 
 	def set_data(self, data, copy_data = False):
 		data_frame       = data if isinstance(data, pandas.core.frame.DataFrame) else pandas.DataFrame(data)
@@ -89,7 +90,7 @@ class DataItemModel(QStandardItemModel):
 			self.appendRow([DataItem(data) for data in self._data_frame.iloc[row_index]])
 		self.data_changed.emit()
 		self.layoutChanged.emit()
-		self.parent.setItemDelegate(DataThemeDelegate(self.parent))
+		self.parent.setItemDelegate(self.data_theme_deligate)
 
 	def get_cell_data(self, row_index, column_index):
 		return self._data_frame.iloc[row_index, column_index]
@@ -103,6 +104,8 @@ class DataItemModel(QStandardItemModel):
 
 	def clear_cell_at(self, row_index, column_index):
 		self.item(row_index, column_index).setData(numpy.str(""))
+		# self.data_theme_deligate.setModelData(QWidget(), self, self.index(row_index, column_index))
+
 
 	def clear_row_at(self, row_index):
 		_ =[ self.clear_cell_at(row_index, column_index) for column_index in range(self.columnCount())]
@@ -124,7 +127,14 @@ class DataItemModel(QStandardItemModel):
 		self._data_frame = pandas.concat([upper_half, new_row, lower_half], axis = 0, ignore_index=True)
 		self.set_data(self._data_frame)
 
+	def remove_row_at(self, row_index_list):
+		self._data_frame.drop(self._data_frame.index[row_index_list], axis=0, inplace= True)
+		self.set_data(self._data_frame)
 
+	def remove_column_at(self, column_index_list):
+		print(column_index_list)
+		self._data_frame.drop(self._data_frame.columns[column_index_list], axis=1, inplace= True)
+		self.set_data(self._data_frame)
 
 	def addDataFrameRows(self, count=1):
 		"""
@@ -217,12 +227,9 @@ class DataThemeDelegate(QStyledItemDelegate):
 
 		self.draw_cell_background(painter, option, item.style.background_color())
 		self.draw_cell_type_hint( painter, option, item)
-		
 
 		# i = r.random()
 		# self.cell.set_style('defaule' if i > 0.5 else 'red' )
-
-
 
 		self.initStyleOption(option, index)
 		style = option.widget.style() if option.widget else QApplication.style()
@@ -271,8 +278,8 @@ class Cell(QWidget):
 
 
 
-class DataItem(QStandardItem):
 
+class DataItem(QStandardItem):
 	def __init__(self, data = None):
 		QStandardItem.__init__(self)
 		self.style  = StyleObject()
@@ -346,6 +353,8 @@ class DataItem(QStandardItem):
 
 	def text(self):
 		return (self.format % self.data)
+
+
 
 class StyleObject(QObject):
 	text_size_changed  = pyqtSignal(int)

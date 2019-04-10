@@ -35,7 +35,7 @@ class TableWidget(QTableView):
 		self.setHorizontalScrollMode(QAbstractItemView.ScrollPerPixel)
 		self.setVerticalScrollMode(  QAbstractItemView.ScrollPerPixel)
 		# self.data_model.dataChanged.connect(self.updateDelegates)
-		
+
 		
 	def enable_forzen_view(self, row_index, column_index):
 		if self.enable_frozen_view == True : return
@@ -101,13 +101,15 @@ class TableWidget(QTableView):
 
 
 	def selection_check(self):
-	
-		c = self.cell_item_in_selected_ranges(self.selectionModel().selection())
-		for cell in reduce(lambda i, j : i + j, c):
+		print (self.data_model._data_frame)
 
-			cell.style.set_background_color("#323232")
-			cell.style.set_text_size(6)
-			cell.style.set_text_color("#fdfdfd")
+		# c = self.cell_item_in_selected_ranges(self.selectionModel().selection())
+		# for cell in reduce(lambda i, j : i + j, c):
+
+		# 	cell.style.set_background_color("#323232")
+		# 	cell.style.set_text_size(6)
+		# 	cell.style.set_text_color("#fdfdfd")
+
 
 			# print(cell.m)
 		# self.data_model.set_cell_style(0, 0)
@@ -217,16 +219,7 @@ class TableWidget(QTableView):
 
 	def clear_row_at(self, row_index):
 		self.data_model.clear_cell_at(row_index)
-		self.update_data_model()
-
-	def _clear_row_at(self, row_index):
-		row_data = self.data_model.data_cached[row_index]
-		self.data_model.data_cached[row_index] = [ "" for data in range(len(row_data))]
-		self.update_data_model()
-
-	def _clear_column_at(self, column_index):
-		_ =[ each_row_data.__setitem__(column_index, "") for each_row_data in self.data_model.data_cached]
-		self.update_data_model()        
+		self.update_data_model()    
 
 
 	def selected(self):
@@ -264,59 +257,41 @@ class TableWidget(QTableView):
 			self.selectRow(selected)
 
 	def insert_row_at(self, row_index, row_counts = 1):
-			self.data_model.insert_row_at(row_index)
-			self.row_inserted.emit(row_index)
-			self.update_data_model()	
+		self.data_model.insert_row_at(row_index)
+		self.row_inserted.emit(row_index)
+		self.update_data_model()	
 
-	def _insert_row_at(self, row_index, row_counts = 1):
-		for new_rows in range(row_counts):
-			if self.data_model.data_cached:
-				self.data_model.data_cached.insert(row_index, ["" for each_column in range(len(self.data_model.data_cached[0]))])
-			else:
-				self.data_model.data_cached.append([""])
-			self.row_inserted.emit(row_index)
-			self.update_data_model()
 
 	def insert_column_at(self, column_index, column_counts = 1):
-			self.data_model.insert_column_at(column_index)
-			self.column_inserted.emit(column_index)
-			self.update_data_model()
+		self.data_model.insert_column_at(column_index)
+		self.column_inserted.emit(column_index)
+		self.update_data_model()
 
-	def _insert_column_at(self, column_index, column_counts = 1):
-		for new_columns in range(column_counts):
-			if self.data_model.data_cached:
-				_ =[ each_row.insert(column_index, "") for each_row in self.data_model.data_cached]
-				
-			else:
-				self.data_model.data_cached.append([""])
-			self.column_inserted.emit(column_index)
-			self.update_data_model()
+
 
 	def remove_selected_rows(self):
-  
-		for selected_row_index in sorted(self.selected_rows(), reverse=True):
-			self.remove_row_at(selected_row_index)
+		self.remove_row_at(self.selected_rows())
 
 
 	def remove_selected_columns(self):
-		for selected_column_index in sorted(self.selected_columns(), reverse=True):
-			self.remove_column_at(selected_column_index)
+		self.remove_column_at(self.selected_columns())
+
 
 	def remove_row_at(self, row_index):
-		self.data_model.data_cached.pop(row_index)
-		self.selectionModel().clearSelection()
+		self.data_model.remove_row_at(row_index)
 		self.row_removed.emit(row_index)
 		self.update_data_model()
 
+
 	def remove_column_at(self, column_index):
-		_ = [ each_row.pop(column_index) for each_row in self.data_model.data_cached]
-		self.selectionModel().clearSelection()     
-		self.column_removed.emit(column_index) 
-		self.update_data_model()        
-		
+		self.data_model.remove_column_at(column_index)
+		self.column_removed.emit(column_index)
+		self.update_data_model()
+
 	def update_data_model(self):
 		self.setModel(self.data_model)
 		self.model().layoutChanged.emit()
+		self.selectionModel().clearSelection()
 		self.data_updated.emit(self.model())
 	
 	def set_cell_style_at(self, row_index, column_index, **argv):
