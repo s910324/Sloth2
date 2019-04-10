@@ -266,15 +266,45 @@ class DataThemeDelegate(QStyledItemDelegate):
 			painter.setPen(Qt.NoPen)
 			painter.drawPolygon(triangle)
 			painter.restore()
+'''
+	def createEditor(self, parent, option, index):
+		""" Creates and returns the custom StarEditor object we'll use to edit 
+			the StarRating.
+		"""
+		if index.column() == 3:
+			editor = Cell(parent)
+			editor.editingFinished.connect(self.commitAndCloseEditor)
+			return editor
+		else:
+			return QStyledItemDelegate.createEditor(self, parent, option, index)
+
+	def setEditorData(self, editor, index):
+		""" Sets the data to be displayed and edited by our custom editor. """
+		QStyledItemDelegate.setEditorData(self, editor, index)
+
+	def setModelData(self, editor, model, index):
+		""" Get the data from our custom editor and stuffs it into the model.
+		"""
+		QStyledItemDelegate.setModelData(self, editor, model, index)
+
+	def commitAndCloseEditor(self):
+		""" Erm... commits the data and closes the editor. :) """
+		editor = self.sender()
+
+		# The commitData signal must be emitted when we've finished editing
+		# and need to write our changed back to the model.
+		self.commitData.emit(editor)
+		self.closeEditor.emit(editor)
+'''
 
 class Cell(QWidget):
+	editingFinished = pyqtSignal()
 	def __init__(self, parent):
 		super(Cell, self).__init__(parent)
 
 	def set_style(self, style_group  = 'default'):
 		print( self)
 		self.setProperty('style_group', style_group)
-
 
 
 
