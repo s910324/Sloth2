@@ -86,3 +86,6 @@
 	freeze view currently is still not function properly
 
 
+#20190412
+cell widget with QLINEEDIE which supports showing formatting value at editting and display
+https://stackoverflow.com/questions/8760141/change-text-of-qstandarditem-when-editing-starts

@@ -272,27 +272,27 @@ class FreezeView(QTableView):
 			self.updateGeometry()
 		
 	def remove_row_at(self, row_index):
-		if row_index in range(self.start_row_index, self.end_row_index):
-			self.end_row_index -= 1
+		# if row_index in range(self.start_row_index, self.end_row_index):
+		# 	self.end_row_index -= 1
 			self.initiallize_geometry()
 
 	def remove_column_at(self, column_index):
-		if column_index in range(self.start_column_index, self.end_column_index):
-			self.end_column_index -= 1
+		# if column_index in range(self.start_column_index, self.end_column_index):
+		# 	self.end_column_index -= 1
 			self.initiallize_geometry()
 
 	def insert_row_at(self, row_index, row_counts = 1):
-		if row_index in range(self.start_row_index, self.end_row_index):
-			self.end_row_index += row_counts
-			for row_index in range(self.end_row_index-1, self.end_row_index+row_counts-1):
-				self.setRowHidden(row_index, False)
+		# if row_index in range(self.start_row_index, self.end_row_index):
+		# 	self.end_row_index += row_counts
+		# 	for row_index in range(self.end_row_index-1, self.end_row_index+row_counts-1):
+		# 		self.setRowHidden(row_index, False)
 			self.initiallize_geometry()
 
 	def insert_column_at(self, column_index, column_counts = 1):
-		if column_index in range(self.start_column_index, self.end_column_index):
-			self.end_column_index += column_counts
-			for column_index in range(self.end_column_index-1, self.end_column_index+column_counts-1):
-				self.setColumnHidden(column_index, False)
+		# if column_index in range(self.start_column_index, self.end_column_index):
+		# 	self.end_column_index += column_counts
+		# 	for column_index in range(self.end_column_index-1, self.end_column_index+column_counts-1):
+		# 		self.setColumnHidden(column_index, False)
 			self.initiallize_geometry()
 
 	def initiallize_mouse_anchor(self):

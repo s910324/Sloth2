@@ -203,7 +203,7 @@ class DataItemModel(QStandardItemModel):
 			return '%d [%s]\n %s' % (section + 1, axis_text, name_text)
 
 		if orientation == Qt.Vertical and role == Qt.DisplayRole:
-			return ('%d' % (section + 1)).zfill(len(str(len(self.data_cached))))
+			return ('%d' % (section + 1)).zfill(len(str(len(self._data_frame))))
 		return None
 
 	def get_cell_style(self, index):
@@ -221,6 +221,24 @@ class DataThemeDelegate(QStyledItemDelegate):
 		super(DataThemeDelegate, self).__init__(*args)
 		self.cell = Cell(self.parent())
 
+	def createEditor(self, parent, option, index):
+		self.editor = QLineEdit(parent)
+		return self.editor
+
+	def setEditorData(self, editor, index):
+		value = index.model().data(index, Qt.EditRole)
+
+
+		editor.setText(str(value))
+
+	def setModelData(self, editor, model, index):
+		# spinBox.interpretText()
+		value =editor.text()
+
+		model.setData(index, value, Qt.EditRole)
+
+	def updateEditorGeometry(self, editor, option, index):
+		editor.setGeometry(option.rect)
 
 	def paint(self, painter, option, index):
 		item = index.model().itemFromIndex(index)
@@ -266,36 +284,36 @@ class DataThemeDelegate(QStyledItemDelegate):
 			painter.setPen(Qt.NoPen)
 			painter.drawPolygon(triangle)
 			painter.restore()
-'''
-	def createEditor(self, parent, option, index):
-		""" Creates and returns the custom StarEditor object we'll use to edit 
-			the StarRating.
-		"""
-		if index.column() == 3:
-			editor = Cell(parent)
-			editor.editingFinished.connect(self.commitAndCloseEditor)
-			return editor
-		else:
-			return QStyledItemDelegate.createEditor(self, parent, option, index)
 
-	def setEditorData(self, editor, index):
-		""" Sets the data to be displayed and edited by our custom editor. """
-		QStyledItemDelegate.setEditorData(self, editor, index)
+	# def createEditor(self, parent, option, index):
+	# 	""" Creates and returns the custom StarEditor object we'll use to edit 
+	# 		the StarRating.
+	# 	"""
+	# 	if index.column() == 0:
+	# 		editor = Cell(parent)
+	# 		editor.editingFinished.connect(self.commitAndCloseEditor)
+	# 		return editor
+	# 	else:
+	# 		return QStyledItemDelegate.createEditor(self, parent, option, index)
 
-	def setModelData(self, editor, model, index):
-		""" Get the data from our custom editor and stuffs it into the model.
-		"""
-		QStyledItemDelegate.setModelData(self, editor, model, index)
+	# def setEditorData(self, editor, index):
+	# 	""" Sets the data to be displayed and edited by our custom editor. """
+	# 	QStyledItemDelegate.setEditorData(self, editor, index)
 
-	def commitAndCloseEditor(self):
-		""" Erm... commits the data and closes the editor. :) """
-		editor = self.sender()
+	# def setModelData(self, editor, model, index):
+	# 	""" Get the data from our custom editor and stuffs it into the model.
+	# 	"""
+	# 	QStyledItemDelegate.setModelData(self, editor, model, index)
 
-		# The commitData signal must be emitted when we've finished editing
-		# and need to write our changed back to the model.
-		self.commitData.emit(editor)
-		self.closeEditor.emit(editor)
-'''
+	# def commitAndCloseEditor(self):
+	# 	""" Erm... commits the data and closes the editor. :) """
+	# 	editor = self.sender()
+
+	# 	# The commitData signal must be emitted when we've finished editing
+	# 	# and need to write our changed back to the model.
+	# 	self.commitData.emit(editor)
+	# 	self.closeEditor.emit(editor)
+
 
 class Cell(QWidget):
 	editingFinished = pyqtSignal()
@@ -312,21 +330,39 @@ class Cell(QWidget):
 class DataItem(QStandardItem):
 	def __init__(self, data = None):
 		QStandardItem.__init__(self)
-		self.style  = StyleObject()
-		self.role   = Qt.EditRole and  Qt.DisplayRole
-		self.format = ""
+		'''data, setdata function is to set indicator value not real data'''
+		self.style           = StyleObject()
+		self.role            = Qt.EditRole and  Qt.DisplayRole
+		self.indicate_format = ""
+		self.indicate_value  = ""
 		self.setData(data)
 		self.connect_style()
+
+
 
 	def setData(self, data, role = None):
 		if issubclass(type(data), numpy.generic):
 			QStandardItem.setData(self, data, role if role else self.role)
 		else:
-			QStandardItem.setData(self, numpy.str(data), role if role else self.role)
+			try:
+				self.data_value      = numpy.double(data)
+				self.indicate_format = "%.2f"
+				QStandardItem.setData(self, self.data_value, role if role else self.role)
+
+			except ValueError:
+				self.data_value      = numpy.str(data)
+				self.indicate_format = "%s"
+				QStandardItem.setData(self, self.data_value, role if role else self.role)
+
 		self.emitDataChanged()
 
+
+
 	def data(self, role = None):
-		return QStandardItem.data(self, role if role else self.role)
+		if role == Qt.DisplayRole:
+			return self.indicate_format % QStandardItem.data(self, role)
+		else:
+			return QStandardItem.data(self, role if role else self.role) 
 
 
 	def data_type(self):
@@ -343,6 +379,7 @@ class DataItem(QStandardItem):
 
 	def _set_text_color(self, font_color):
 		self.setForeground(QColor(font_color))
+
 
 	def _to_double(self):
 		try:
@@ -382,7 +419,7 @@ class DataItem(QStandardItem):
 
 
 	def text(self):
-		return (self.format % self.data)
+		return (self.indicate_format % self.data)
 
 
 
