@@ -14,7 +14,7 @@ TableWidget::item, FreezeView::item{
 
 TableWidget::item:selected:active,  FreezeView::item:selected:active, Cell::item:selected:active {
 	background-color: rgba(100, 100, 100, .2);
-	color: #000000;
+	color: #FF0000;
 }
 
 TableWidget::item:selected:!active, FreezeView::item:selected:!active, Cell::item:selected:!active {

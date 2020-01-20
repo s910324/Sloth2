@@ -8,11 +8,16 @@ from PyQt5.QtWidgets import *
 from PyQt5.QtCore    import *
 from PyQt5.QtGui     import *
 from HeaderItem      import HHeaderItem, VHeaderItem
-from DataModel       import DataModel, DataItemModel
+from DataModel       import DataItemModel
 from FreezeView      import FreezeView
 from CursorTracker   import CursorTracker
 from functools       import reduce
 from itertools       import chain
+import sys
+
+sys.path.append('../AllmightDataProcesser')
+from allmight import *
+
 
 class TableWidget(QTableView):
 	trigger = pyqtSignal()
@@ -20,7 +25,7 @@ class TableWidget(QTableView):
 	row_removed               = pyqtSignal(int)
 	column_inserted           = pyqtSignal(int)
 	row_inserted              = pyqtSignal(int)
-	data_updated              = pyqtSignal(DataModel)
+	data_updated              = pyqtSignal(DataItemModel)
 	vscroll_mode_changed      = pyqtSignal(QAbstractItemView.ScrollMode)
 	hscroll_mode_changed      = pyqtSignal(QAbstractItemView.ScrollMode)
 	def __init__(self, data = [], parent=None,  *args):
@@ -186,13 +191,12 @@ class TableWidget(QTableView):
 		assert all([ isinstance(dimension, int) for dimension in [top, bottom, left, right]])
 		selected_data = []
 		for row_index in range(top, bottom+1):
-			row_segment_data = self.data_model.data_cached[row_index][left:right+1]
-			selected_data.append(row_segment_data)
+				selected_data.append([ self.data_model.get_cell_data(row_index, column_index) for column_index in range(left, right+1)])
 		return selected_data
 
 	def data_in_cell(self, row_index, column_index):
 		assert all([ isinstance(dimension, int) for dimension in [row_index, column_index]])
-		return self.data_model[row_index][column_index]
+		return self.data_model.get_cell_data(row_index, column_index)
 
 	def clear_selected_ranges(self):
 		for selected_range in self.selectionModel().selection():
@@ -202,7 +206,7 @@ class TableWidget(QTableView):
 		assert isinstance(selected_range, QItemSelectionRange)
 		for row_index in range(selected_range.top(), selected_range.bottom()+1):
 			for column_index in range(selected_range.left(), selected_range.right()+1):
-				self.data_model.data_cached[row_index][column_index] = ""
+				self.data_model.clear_cell_at(row_index, column_index)
 		self.update_data_model()
 
 	def clear_selected_rows(self):
@@ -218,7 +222,7 @@ class TableWidget(QTableView):
 		self.update_data_model()
 
 	def clear_row_at(self, row_index):
-		self.data_model.clear_cell_at(row_index)
+		self.data_model.clear_row_at(row_index)
 		self.update_data_model()    
 
 
@@ -346,6 +350,11 @@ class TableWidget(QTableView):
 		QTableView.setVerticalScrollMode(self, scroll_mode)
 		self.vscroll_mode_changed.emit(scroll_mode)
 
+	def change_cell_color(self):
+
+		# t = selected_range.top()
+		# l = selected_range.left()
+		self.data_model.set_cell_style(self.data_model.index(1, 2))
 
 class DebugWindow(QMainWindow):
 	def __init__(self, parent=None):
@@ -435,19 +444,26 @@ class DebugWindow(QMainWindow):
 		# self.testAction.triggered.connect(self.table.insert_column_at)
 		
 
+
+		self.z.triggered.connect(lambda _,  : self.table.change_cell_color())
+
 		self.addToolBar( Qt.TopToolBarArea , self.toolbar1)
 		self.addToolBarBreak(Qt.TopToolBarArea)
 		self.addToolBar( Qt.TopToolBarArea , self.toolbar2)
 		self.addToolBarBreak(Qt.TopToolBarArea)
-		self.addToolBar( Qt.TopToolBarArea , self.toolbar3)		
-		data = []
-		for r in range(50):
-			row_data = []
-			for c in range(30):
-				row_data.append("cell %s, %s" % (str(r).zfill(2), str(c).zfill(2)))
-			data.append(row_data)
+		self.addToolBar( Qt.TopToolBarArea , self.toolbar3)
 
-		data[0][0] = "2.1234355"
+		file_name = "C:/Users/rawr/Desktop/Book1.csv"
+		
+		data  =  (Parse.csv(file_name))		
+		# data = []
+		# for r in range(50):
+		# 	row_data = []
+		# 	for c in range(30):
+		# 		row_data.append("cell %s, %s" % (str(r).zfill(2), str(c).zfill(2)))
+		# 	data.append(row_data)
+
+		# data[0][0] = "2.1234355"
 
 		self.table.set_data(data)
 
