@@ -480,7 +480,7 @@ def Debugger():
 	f.open(QFile.ReadOnly | QFile.Text)
 	ts = QTextStream(f)
 	stylesheet = ts.readAll()
-	app.setStyleSheet(stylesheet)
+	# app.setStyleSheet(stylesheet)
 	form.show()
 	app.exec_()
 	
