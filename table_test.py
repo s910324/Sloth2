@@ -15,7 +15,7 @@ from functools       import reduce
 from itertools       import chain
 import sys
 
-sys.path.append('../AllmightDataProcesser')
+sys.path.append("../AllmightDataProcesser")
 from allmight import *
 
 
@@ -136,7 +136,7 @@ class TableWidget(QTableView):
 
 	def copy_selected_ranges(self):
 		selected_data = self.data_in_selected_ranges(self.selectionModel().selection())
-		clip_board_text = ('\n'.join(['\t'.join(map(str, row_data)) for row_data in selected_data]))
+		clip_board_text = ("\n".join(["\t".join(map(str, row_data)) for row_data in selected_data]))
 		QApplication.clipboard().setText(clip_board_text)
 		return clip_board_text
 
@@ -363,92 +363,10 @@ class DebugWindow(QMainWindow):
 		super(DebugWindow, self).__init__(parent)
 		self.table       = TableWidget(self)
 
-		self.toolbar1     = QToolBar('Row Column function')
-		self.toolbar2     = QToolBar('table function')
-		self.toolbar3     = QToolBar('table formatting')
-
-		self.a  = QAction('insert_row_before_selection', self)
-		self.b  = QAction('insert_row_after_selection', self)
-		self.c  = QAction('insert_column_before_selection', self)
-		self.d  = QAction('insert_column_after_selection', self)
-		self.e  = QAction("remove_selected_rows", self)
-		self.f  = QAction("remove_selected_columns", self)
-		self.g  = QAction("clear_selected_rows", self)
-		self.h  = QAction("clear_selected_columns", self)       
-		self.i  = QAction("clear_selected_ranges", self)
-		self.j  = QAction('enable frozen view', self)
-		self.k  = QAction('disable frozen view', self)
-		self.l  = QAction('smooth scroll', self)
-		self.m  = QAction('scroll by item', self)
-		self.n  = QAction('show header', self)
-		self.o  = QAction('hide header', self)
-		self.p  = QAction('set bold', self)
-		self.q  = QAction('set italic', self)
-		self.r  = QAction('set underlined', self)
-		self.s  = QAction('align left', self)
-		self.t  = QAction('align center', self)
-		self.u  = QAction('align right', self)
-		self.v  = QAction('align top', self)
-		self.w  = QAction('align middle', self)
-		self.x  = QAction('align bottom', self)
-		self.y  = QAction('set bd color', self)
-		self.z  = QAction('set txt color', self)
-		self.zz = QAction('test', self)
-
-
-
-		self.toolbar1.addAction(self.a)
-		self.toolbar1.addAction(self.b)
-		self.toolbar1.addAction(self.c)
-		self.toolbar1.addAction(self.d)      
-		self.toolbar1.addAction(self.e)
-		self.toolbar1.addAction(self.f)
-		self.toolbar1.addAction(self.g)
-		self.toolbar1.addAction(self.h)      
-		self.toolbar2.addAction(self.i)
-		self.toolbar2.addAction(self.j)
-		self.toolbar2.addAction(self.k)
-		self.toolbar2.addAction(self.l)
-		self.toolbar2.addAction(self.m)		
-		self.toolbar2.addAction(self.n)
-		self.toolbar2.addAction(self.o)
-		self.toolbar2.addAction(self.zz)
-		self.toolbar3.addAction(self.p)
-		self.toolbar3.addAction(self.q)
-		self.toolbar3.addAction(self.r)
-		self.toolbar3.addAction(self.s)
-		self.toolbar3.addAction(self.t)
-		self.toolbar3.addAction(self.u)
-		self.toolbar3.addAction(self.v)
-		self.toolbar3.addAction(self.w)
-		self.toolbar3.addAction(self.x)
-		self.toolbar3.addAction(self.y)
-		self.toolbar3.addAction(self.z)
-
-		self.a.triggered.connect(lambda _,  : self.table.insert_row_before_selection())
-		self.b.triggered.connect(lambda _,  : self.table.insert_row_after_selection())
-		self.c.triggered.connect(lambda _,  : self.table.insert_column_before_selection())
-		self.d.triggered.connect(lambda _,  : self.table.insert_column_after_selection())
-		self.e.triggered.connect(lambda _,  : self.table.remove_selected_rows())
-		self.f.triggered.connect(lambda _,  : self.table.remove_selected_columns())
-		self.g.triggered.connect(lambda _,  : self.table.clear_selected_rows())
-		self.h.triggered.connect(lambda _,  : self.table.clear_selected_columns())
-		self.i.triggered.connect(lambda _,  : self.table.clear_selected_ranges())
-		self.j.triggered.connect(lambda _,  : self.table.froze_view_at_selection())
-		self.k.triggered.connect(lambda _,  : self.table.disable_frozen_view())
-		self.l.triggered.connect(lambda _,  : [self.table.setVerticalScrollMode(QAbstractItemView.ScrollPerPixel), self.table.setHorizontalScrollMode(QAbstractItemView.ScrollPerPixel)])
-		self.m.triggered.connect(lambda _,  : [self.table.setVerticalScrollMode(QAbstractItemView.ScrollPerItem), self.table.setHorizontalScrollMode(QAbstractItemView.ScrollPerItem)])
-		self.n.triggered.connect(lambda _,  : [self.table.horizontalHeader().show(), self.table.verticalHeader().show()])
-		self.o.triggered.connect(lambda _,  : [self.table.horizontalHeader().hide(), self.table.verticalHeader().hide()])		
-		self.zz.triggered.connect(lambda _,  : self.table.selection_check())
-		# self.addColAction.triggered.connect(self.table.add_column)
-		# self.rmvColAction.triggered.connect(self.table.rmvCol)
-		# self.testAction.triggered.connect(self.table.insert_column_at)
-		
-
-
-		self.z.triggered.connect(lambda _,  : self.table.change_cell_color())
-
+		self.toolbar1     = self.init_row_col_toolbar()
+		self.toolbar2     = self.init_table_toolbar()
+		self.toolbar3     = self.init_theme_toolbar()
+ 
 		self.addToolBar( Qt.TopToolBarArea , self.toolbar1)
 		self.addToolBarBreak(Qt.TopToolBarArea)
 		self.addToolBar( Qt.TopToolBarArea , self.toolbar2)
@@ -466,11 +384,56 @@ class DebugWindow(QMainWindow):
 		# 	data.append(row_data)
 
 		# data[0][0] = "2.1234355"
-
 		self.table.set_data(data)
-
 		self.setCentralWidget(self.table)
 		self.resize(1200,800)
+
+
+	def init_row_col_toolbar(self):
+		toolbar = QToolBar("Row Column function")
+		self.bind(toolbar, "insert_row_before_selection",   (lambda _,  : self.table.insert_row_before_selection()))
+		self.bind(toolbar, "insert_row_after_selection",    (lambda _,  : self.table.insert_row_after_selection()))
+		self.bind(toolbar, "insert_column_before_selection",(lambda _,  : self.table.insert_column_before_selection()))
+		self.bind(toolbar, "insert_column_after_selection", (lambda _,  : self.table.insert_column_after_selection()))
+		self.bind(toolbar, "remove_selected_rows",          (lambda _,  : self.table.remove_selected_rows()))
+		self.bind(toolbar, "remove_selected_columns",       (lambda _,  : self.table.remove_selected_columns()))
+		self.bind(toolbar, "clear_selected_rows",           (lambda _,  : self.table.clear_selected_rows()))
+		self.bind(toolbar, "clear_selected_columns",        (lambda _,  : self.table.clear_selected_columns()))
+		return toolbar
+
+	def init_table_toolbar(self):
+		toolbar = QToolBar("table function")
+		self.bind(toolbar, "clear_selected_ranges", lambda _,  : self.table.clear_selected_ranges())
+		self.bind(toolbar, "enable frozen view"   , lambda _,  : self.table.froze_view_at_selection())
+		self.bind(toolbar, "disable frozen view"  , lambda _,  : self.table.disable_frozen_view())
+		self.bind(toolbar, "smooth scroll"        , lambda _,  : [self.table.setVerticalScrollMode(QAbstractItemView.ScrollPerPixel), self.table.setHorizontalScrollMode(QAbstractItemView.ScrollPerPixel)])
+		self.bind(toolbar, "scroll by item"       , lambda _,  : [self.table.setVerticalScrollMode(QAbstractItemView.ScrollPerItem), self.table.setHorizontalScrollMode(QAbstractItemView.ScrollPerItem)])
+		self.bind(toolbar, "show header"          , lambda _,  : [self.table.horizontalHeader().show(), self.table.verticalHeader().show()])
+		self.bind(toolbar, "hide header"          , lambda _,  : [self.table.horizontalHeader().hide(), self.table.verticalHeader().hide()])
+		return toolbar
+
+	def init_theme_toolbar(self):
+		toolbar = QToolBar("Cell themeing")
+		self.bind(toolbar, "set bold",      lambda _ : print("OK"))
+		self.bind(toolbar, "set italic",    lambda _ : print("OK"))
+		self.bind(toolbar, "set underline", lambda _ : print("OK"))
+		self.bind(toolbar, "align left",    lambda _ : print("OK"))
+		self.bind(toolbar, "align center",  lambda _ : print("OK"))
+		self.bind(toolbar, "align right",   lambda _ : print("OK"))
+		self.bind(toolbar, "align top",     lambda _ : print("OK"))
+		self.bind(toolbar, "align middle",  lambda _ : print("OK"))
+		self.bind(toolbar, "align bottom",  lambda _ : print("OK"))
+		self.bind(toolbar, "set Font",      lambda _ : print("OK"))
+		self.bind(toolbar, "set size",      lambda _ : print("OK"))
+		self.bind(toolbar, "set bold",      lambda _ : self.table.selection_check())
+		return toolbar
+	
+	def bind(self, toolbar, text, function):
+		action = QAction(text, self)
+		action.triggered.connect(function)
+		toolbar.addAction(action)
+
+
 
 
 
