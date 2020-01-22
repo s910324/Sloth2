@@ -354,7 +354,9 @@ class TableWidget(QTableView):
 
 		# t = selected_range.top()
 		# l = selected_range.left()
-		self.data_model.set_cell_style(self.data_model.index(1, 2))
+		self.data_model.set_cell_style(0, 0)
+		self.viewport().update()      #essential, themeing take effect after view port update
+		
 
 class DebugWindow(QMainWindow):
 	def __init__(self, parent=None):

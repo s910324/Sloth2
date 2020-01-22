@@ -5,69 +5,10 @@ from PyQt5.QtWidgets import *
 from PyQt5.QtCore    import *
 from PyQt5.QtGui     import *
 from HeaderItem      import HHeaderItem, VHeaderItem
+from StyleObject     import StyleObject
 import pandas 
 import numpy
 import random as r
-#no longer required module, replaced by dataitemmodel
-# class DataModel(QAbstractTableModel):
-#   """ for data storage and data handling"""
-#   def __init__(self, parent = None, *args):
-#       QAbstractTableModel.__init__(self, parent, *args)
-
-#       self.data_cached             = []
-#       self.horizontal_header_items = {}
-    
-#   def load_data(self, data):
-#       self.data_cached = data
- 
-#   def rowCount(self, parent):
-#       return len(self.data_cached)
- 
-#   def columnCount(self, parent):
-#       return len(self.data_cached[0]) if self.data_cached else 0
- 
-#   def get_value(self, index):
-#       return self.data_cached[index.row()][index.column()]
- 
-#   def data(self, index, role):
-#       if not index.isValid():
-#           return None
-#       value = self.get_value(index)
-#       if role == Qt.DisplayRole or role == Qt.EditRole:
-#           return value
-#       elif role == Qt.TextAlignmentRole:
-#               return Qt.AlignCenter
-#       return None
- 
-#   def setData(self, index, value, role): 
-#       if index.isValid() and role == Qt.EditRole:
-#           self.data_cached[index.row()][index.column()] = value
-#           self.dataChanged.emit(index, index)
-#           return True
-#       else:
-#           return False
- 
-#   def headerData(self, section, orientation, role):
-#       if orientation == Qt.Horizontal and role == Qt.DisplayRole:
-#           axis_text     = "-"
-#           name_text     = ""
-#           if section in self.horizontal_header_items:
-#               axis_text     = self.horizontal_header_items[section]["axis_text"]
-#               name_text     = self.horizontal_header_items[section]["name_text"]
-#           return '%d [%s]\n %s' % (section + 1, axis_text, name_text)
-
-#       if orientation == Qt.Vertical and role == Qt.DisplayRole:
-#           return ('%d' % (section + 1)).zfill(len(str(len(self.data_cached))))
-#       return None
- 
-#   def flags(self, index):
-#       if not index.isValid():
-#           return Qt.ItemIsEnabled
-#       elif index.column() > 1:
-#           return Qt.ItemIsEnabled | Qt.ItemIsSelectable | Qt.ItemIsEditable
- 
-#       return Qt.ItemIsEnabled | Qt.ItemIsSelectable
- 
 
 class DataItemModel(QStandardItemModel):
     """ for data storage and data handling"""
@@ -211,12 +152,16 @@ class DataItemModel(QStandardItemModel):
     def get_cell_style(self, index):
         return type(self.parent.itemDelegate(index).cell)#.styleSheet()
 
-    def set_cell_style(self, index ):#, style):
-        # print(self.parent.model().item(0, 0).text())
-        # self.parent.model().item(0, 0).setText("123123123")
-        self.item(0, 1).style._background_color = "#0033FF"
+    def set_cell_style(self, row_index, column_index ):#, style):
+        item = self.item(row_index, column_index)
+        item.style.background = QBrush(QColor("#Da33f3"))
+        if item.style.font_size == 14:
+            item.style.font_size = 30
+        else:
+            item.style.font_size = 14
 
-        # self.parent.model().item(0, 1).setm()
+        
+
 
 
 class Cell(QWidget):
@@ -244,6 +189,7 @@ class DataItem(QStandardItem):
         self.setData(data, self.role)
         self.connect_style()
         self._set_text_color("#AA33FF") # takes no effect
+
 
 
 
@@ -279,8 +225,9 @@ class DataItem(QStandardItem):
         return type(self.data())
 
     def connect_style(self):
-        self.style.text_size_changed.connect( lambda x : self._set_text_size(x))
-        self.style.text_color_changed.connect(lambda x : self._set_text_color(x))
+        pass
+        # self.style.text_size_changed.connect( lambda x : self._set_text_size(x))
+        # self.style.text_color_changed.connect(lambda x : self._set_text_color(x))
 
     def _set_text_size(self, size): #function not working
         font = self.font()
@@ -341,18 +288,28 @@ class DataThemeDelegate(QStyledItemDelegate):
         self.cell = Cell(self.parent())
         self.text = ""
 
-    def createEditor(self, parent, option, index):
-        # change text style while at editing mode
-        self.editor = QLineEdit(parent)
+    def createEditor(self, parent, option, index): # change text style while at editing mode
+        data_model_item = index.model().itemFromIndex(index)
+        data_type       = data_model_item.data_type()
+        cell_style      = data_model_item.style 
+
+        self.editor     = QLineEdit(parent)
+        palette         = self.editor.palette()
+
+        palette.setColor(QPalette.Text, cell_style.font_color)
+        palette.setBrush(QPalette.Base, cell_style.background)
+        self.editor.setPalette(palette)
+        self.editor.setFont(cell_style.font)
+        self.editor.setAlignment(cell_style.align)
+        
         # self.editor.setStyleSheet("QLineEdit::item:selected{ background-color: rgba(255, 255, 255, 100);}") #should able to be controlled by setBG function
-        print ("---", index.model().itemFromIndex(index), index.model().itemFromIndex(index).style.background_color, self.editor)
+        print ("---", index.model().itemFromIndex(index), index.model().itemFromIndex(index).style.font_size, self.editor)
         return self.editor
 
     def setEditorData(self, editor, index):
         value = index.model().data(index, Qt.EditRole)
         editor.setText(str(value))
         self.text = value
-
 
     def setModelData(self, editor, model, index):
         value = editor.text()
@@ -362,70 +319,46 @@ class DataThemeDelegate(QStyledItemDelegate):
         editor.setGeometry(option.rect)
 
     def paint(self, painter, option, index):
-
         self.initStyleOption(option, index)
-   
+        painter.setRenderHint(painter.Antialiasing)
+
         data_model_item = index.model().itemFromIndex(index)
         data_type       = data_model_item.data_type()
         cell_style      = data_model_item.style
 
-        # self.draw_cell_background(painter, option, cell_style.background_color, cell_style.background_brush_style, cell_style.background_brush_color)
-        self.draw_cell_type_hint( painter, option, data_type)
-        self.draw_display_text(painter, option, index)
+        self.draw_cell_background(painter, option, cell_style.background, cell_style.background_brush)
+        self.draw_display_text   (painter, option, index, cell_style.font, cell_style.font_color, cell_style.align)
+        if index.column()<5 and index.row()<5:
+            self.draw_image(painter, option, index, "123")
+        self.draw_cell_type_hint (painter, option, data_type)
 
-        # i = r.random()
-        # self.cell.set_style('default' if i > 0.5 else 'red' )
         style = option.widget.style() if option.widget else QApplication.style()
         style.unpolish(self.cell)
         style.polish(self.cell)
 
-        # style.drawControl(QStyle.CE_ItemViewItem , option, painter, self.cell)
+    def draw_display_text(self, painter, option, index, font, font_color, align):
+        painter.setPen(QColor(font_color))
+        painter.setFont(font)
+        painter.drawText( option.rect, align, option.text)
 
+    def draw_cell_background(self, painter, option, background, background_brush):
+        selection_brush         = QBrush(QColor(150,150,150,20))
 
-    def draw_display_text(self, painter, option, index):
-        option.font.setBold(True)
-        option.font.setItalic(True)
-        option.font.setOverline(True)
-        option.font.setStrikeOut(True)
-        option.font.setUnderline(True)
-        print(option.state)
-        option.font.setPointSize(14)
-        option.displayAlignment = Qt.AlignCenter
-        background =  QBrush(QColor("#FF0000"),  Qt.Dense7Pattern)
-        painter.save() 
-        painter.fillRect(option.rect, background);
-        painter.restore()       
-
-        # appreach 1
-        QStyledItemDelegate.paint(self, painter, option, index)
-
-        # appreach 2
-        # style = option.widget.style() if option.widget else QApplication.style()
-        # painter.setPen(Qt.red)
-        # style.drawItemText(painter, option.rect, option.displayAlignment, option.palette, True, option.text);
-
-
-        # appreach 3
-        # option.palette.setColor(QPalette.Foreground, Qt.red);
-        # painter.setPen(QPen(QColor("#00FF00")))
-        # painter.setFont(option.font)
-        # painter.drawText( option.rect, Qt.AlignCenter, option.text);  #this approach does not offer text  formatting, use state detection below
+        painter.save()
+        painter.fillRect(option.rect, background)    
         if ((option.state & QStyle.State_Selected) == QStyle.State_Selected) : 
-            print("OK")
+            painter.fillRect(option.rect, selection_brush)
 
-    def draw_cell_background(self, painter, option, background_color, background_brush_style, background_brush_color):
-
-        
-        painter.setRenderHint(painter.Antialiasing)
-        background_brush        = QBrush(QColor(background_color), Qt.SolidPattern)
-        background_styled_brush = QBrush(QColor(background_brush_color), background_brush_style)
-
-        painter.fillRect(option.rect, background_brush);
-
-        if not(background_brush_style == Qt.SolidPattern):  
-            painter.fillRect(option.rect, background_styled_brush);    
-
+        if not(background_brush.style() == Qt.SolidPattern):  
+            painter.fillRect(option.rect, background_styled_brush) 
         painter.restore()
+
+    def draw_image(self, painter, option, index, image):
+        image          = QPixmap(r'C:\Users\rawr\Downloads\Image0116 19-12-16 11-18-48.jpg')
+        iw, ih         = image.rect().width(), image.rect().height()
+        cx, cy, cw, ch = option.rect.x(), option.rect.y(), option.rect.width(),  option.rect.height()
+        zoom           = (ch/ih) if (cw/iw) > (ch/ih) else (cw/iw)
+        painter.drawPixmap(QRect(cx, cy, iw * zoom, ih * zoom), image)
 
     def draw_cell_type_hint(self, painter, option, data_type):
         if data_type == str:
@@ -434,102 +367,8 @@ class DataThemeDelegate(QStyledItemDelegate):
             triangle.setPoint(1, QPoint(option.rect.x(),   option.rect.y()))
             triangle.setPoint(2, QPoint(option.rect.x(),   option.rect.y()+4))
             painter.save()
-            painter.setRenderHint(painter.Antialiasing)
             painter.setBrush(QBrush(QColor("#00cc66"))) 
             painter.setPen(Qt.NoPen)
             painter.drawPolygon(triangle)
             painter.restore()
 
-
-class StyleObject(QObject):
-    background_color_changed       = pyqtSignal(str)
-    background_brush_style_changed = pyqtSignal(QBrush)
-    background_brush_color_changed = pyqtSignal(str)
-    text_size_changed              = pyqtSignal(int)
-    text_color_changed             = pyqtSignal(str)
-    
-    def __init__(self):
-        super(StyleObject, self).__init__()
-        self._background_color       =  "#FFFFFF"       #achieved by DataThemeDelegate draw background
-        self._background_brush_style =  Qt.Dense3Pattern
-        self._background_brush_color =  "#33ff33"
-        self._type_hint_color        =  "#33ff33"
-        self._text_size              =  8
-        self._text_color             =  "#000000"
-        self._text_font              =  "Inconsolata"
-        self._text_bold              =  False
-        self._text_italic            =  False
-        self._text_underline         =  False
-        self._text_deleteline        =  False
-        self._text_h_align           =  Qt.AlignRight
-        self._text_v_align           =  Qt.AlignHCenter
-        self._border_style           =  Qt.SolidLine
-        self._border_width           =  0
-        self._bolder_color           =  "#000000"
-
-
-
-    @property
-    def background_color(self):
-        return self._background_color   
-
-    @background_color.setter
-    def background_color(self, color):
-        self._background_color = color
-        self.background_color_changed.emit(color)
-
-    @property
-    def background_brush_style(self):
-        return self._background_brush_style 
-
-    @background_brush_style.setter
-    def background_brush_style(self, style):
-        self._background_brush_style = style
-        self.background_brush_style_changed.emit(style)
-
-    @property
-    def background_brush_color(self):
-        return self._background_brush_color 
-
-    @background_brush_color.setter
-    def background_brush_color(self, color):
-        self._background_brush_color = color
-        self.background_brush_color_changed.emit(color)
-
-    @property
-    def type_hint_color(self):
-        return self._type_hint_color    
-
-    @type_hint_color.setter
-    def type_hint_color(self, color):
-        self._type_hint_color = color
-        self.type_hint_color_changed.emit(color)
-
-    @property
-    def text_size(self):
-        return self._text_size
-
-    @text_size.setter
-    def text_size(self, size):
-        self._text_size = size
-        self.text_size_changed.emit(size)
-
-    @property
-    def text_color(self):
-        return self._text_color
-        
-    @text_color.setter
-    def text_color(self, color):
-        self._text_color = color
-        self.text_color_changed.emit(color)
-
-    @property
-    def text_h_align(self):
-        return self._text_h_align
-
-    @text_h_align.setter
-    def text_h_align(self, align):
-        if align in [Qt.AlignLeft, Qt.AlignRight, Qt.AlignHCenter, Qt.AlignJustify]:
-            self._text_h_align = align
-        else:
-            raise TypeError("StyleObject invalid test align type %s, %s" & (type(align), align))
